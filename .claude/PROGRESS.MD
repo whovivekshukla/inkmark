@@ -1,6 +1,6 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 1 — Prisma Schema + Database Setup
+## Current phase: Phase 2 — Auth (Google OAuth + JWT)
 ## Status: Not started
 
 ---
@@ -28,12 +28,12 @@
 - [x] Logger writes to console in dev (Winston, colorized simple format in dev)
 
 ## Phase 1 — Prisma Schema + Database Setup
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] `prisma migrate dev` runs cleanly
-- [ ] `prisma studio` shows all tables
-- [ ] Search vector trigger fires on clip insert
-- [ ] Prisma client generates without errors
+- [x] `prisma migrate dev` runs cleanly
+- [x] `prisma studio` shows all tables
+- [x] Search vector trigger fires on clip insert (CREATE TRIGGER confirmed)
+- [x] Prisma client generates without errors
 
 ## Phase 2 — Auth (Google OAuth + JWT)
 **Status**: Not started
@@ -112,6 +112,8 @@
 - Phase 0: `packageManager: "pnpm@9.12.3"` added to root package.json — required by turbo v2 for workspace resolution.
 - Phase 0: `packages/shared` points main/types at `./src/index.ts` for dev (ts-node-dev resolves TypeScript directly); build step compiles to dist/ in later phases.
 - Phase 0: Health check mounted at `/health` (outside `/api/v1/`) so load balancers can reach it without auth.
+- Phase 1: `AuditAction` implemented as TypeScript enum (`constants/audit-actions.ts`) not a Postgres enum — avoids `ALTER TYPE` migrations every time a new action is added during active development, and in prod.
+- Phase 1: `searchVector` kept in schema using `Unsupported("tsvector")` — Prisma manages the column in migrations but never reads/writes it; populated exclusively via Postgres trigger on clip insert/update.
 
 ---
 

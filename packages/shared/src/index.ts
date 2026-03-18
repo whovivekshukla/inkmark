@@ -1,4 +1,4 @@
-export type { ApiResponse, PaginationMeta, ApiError } from './types/api'
+export type { ApiResponse, PaginationMeta, ApiError, PaginationQuery } from './types/api'
 export type { UserDTO } from './types/user'
 export type {
   ClipDTO,

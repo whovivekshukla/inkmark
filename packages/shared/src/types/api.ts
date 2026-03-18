@@ -1,8 +1,6 @@
-export interface ApiResponse<T> {
-  data?: T
-  meta?: PaginationMeta
-  error?: ApiError
-}
+export type ApiResponse<T> =
+  | { success: true; data: T; meta?: PaginationMeta }
+  | { success: false; error: ApiError }
 
 export interface PaginationMeta {
   page: number
@@ -14,4 +12,9 @@ export interface PaginationMeta {
 export interface ApiError {
   code: string
   message: string
+}
+
+export interface PaginationQuery {
+  page: number
+  limit: number
 }

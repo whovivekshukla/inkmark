@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id          String    @id @default(cuid())
+  username    String    @unique
+  email       String    @unique
+  googleId    String    @unique @map("google_id")
+  displayName String    @map("display_name")
+  avatarUrl   String?   @map("avatar_url")
+  bio         String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at") // soft delete
+
+  clips      Clip[]
+  highlights Highlight[]
+  followers  Follow[]    @relation("following")
+  following  Follow[]    @relation("follower")
+  tags       Tag[]
+  auditLogs  AuditLog[]
+
+  @@index([email])
+  @@index([googleId])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ─── Clip ────────────────────────────────────────────────────────────────────
+// A "clip" is a saved article/URL by a user.
+
+model Clip {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  url         String
+  domain      String
+  title       String?
+  description String?
+  ogImage     String?   @map("og_image")
+  faviconUrl  String?   @map("favicon_url")
+  isPublic    Boolean   @default(true) @map("is_public")
+  savedAt     DateTime  @default(now()) @map("saved_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at") // soft delete
+
+  // Full-text search vector — populated via PostgreSQL trigger on insert/update.
+  // Using Unsupported because Prisma does not natively manage tsvector columns.
+  searchVector Unsupported("tsvector")? @map("search_vector")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  highlights Highlight[]
+  tags       ClipTag[]
+
+  @@unique([userId, url]) // prevents duplicate clips per user
+  @@index([userId])
+  @@index([savedAt])
+  @@index([domain])
+  @@index([deletedAt])
+  @@map("clips")
+}
+
+// ─── Highlight ───────────────────────────────────────────────────────────────
+
+model Highlight {
+  id            String    @id @default(cuid())
+  clipId        String    @map("clip_id")
+  userId        String    @map("user_id")
+  text          String
+  contextBefore String?   @map("context_before") // ~50 chars before selection
+  contextAfter  String?   @map("context_after")  // ~50 chars after selection
+  color         String    @default("yellow")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clipId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("highlights")
+}
+
+// ─── Tag ─────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  name   String
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clips ClipTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+// ─── ClipTag (join table) ─────────────────────────────────────────────────────
+
+model ClipTag {
+  clipId String @map("clip_id")
+  tagId  String @map("tag_id")
+
+  clip Clip @relation(fields: [clipId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([clipId, tagId])
+  @@map("clip_tags")
+}
+
+// ─── Follow ───────────────────────────────────────────────────────────────────
+
+model Follow {
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ─── AuditLog ────────────────────────────────────────────────────────────────
+// Immutable record of all data mutations. Never update or delete rows here.
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id") // null for system actions
+  action    String   // e.g. "clip.created", "highlight.deleted"
+  entity    String   // table name e.g. "clips"
+  entityId  String   @map("entity_id")
+  metadata  Json?    // diff, extra context
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
