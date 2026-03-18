@@ -1,0 +1,13 @@
+{
+  "name": "@inkmark/extension",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Extension build: placeholder'",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'Extension lint: placeholder'"
+  },
+  "devDependencies": {
+    "typescript": "*"
+  }
+}
