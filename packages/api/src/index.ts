@@ -13,6 +13,7 @@ import { followsRouter } from '@/modules/follows'
 import { feedRouter } from '@/modules/feed'
 import { usersRouter } from '@/modules/users'
 import { searchRouter } from '@/modules/search'
+import { tagsRouter } from '@/modules/tags'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -37,6 +38,7 @@ v1Router.use('/follows', followsRouter)
 v1Router.use('/feed', feedRouter)
 v1Router.use('/users', usersRouter)
 v1Router.use('/search', searchRouter)
+v1Router.use('/tags', tagsRouter)
 app.use('/api/v1', v1Router)
 
 // Global error handler must be mounted last

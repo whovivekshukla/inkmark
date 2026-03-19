@@ -1,7 +1,7 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 6 — Users + Search
-## Status: Complete
+## Current phase: Phase 8 — MCP Server
+## Status: In progress
 
 ---
 
@@ -14,7 +14,8 @@
 - [x] Phase 4 — Highlights
 - [x] Phase 5 — Follows + Feed
 - [x] Phase 6 — Users + Search
-- [ ] Phase 7 — Tags
+- [x] Phase 7 — Tags
+- [x] Phase 7.5 — Personal Access Tokens (unplanned)
 - [ ] Phase 8 — MCP Server
 
 ---
@@ -81,19 +82,32 @@
 - [x] User search works case-insensitively
 
 ## Phase 7 — Tags
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] `GET /tags` returns tags with clip counts
-- [ ] `DELETE /tag` cascades to clip_tags
-- [ ] Tag names lowercased + trimmed on create
-- [ ] AuditLog on create and delete
+- [x] `GET /tags` returns tags with clip counts
+- [x] `DELETE /tag` cascades to clip_tags
+- [x] Tag names lowercased + trimmed on create
+- [x] AuditLog on create and delete
+
+## Phase 7.5 — Personal Access Tokens (unplanned)
+**Status**: Complete
+**Deliverables**:
+- [x] `PersonalAccessToken` Prisma model + migration
+- [x] `POST /api/v1/auth/tokens` — create PAT (JWT only, max 10 per user)
+- [x] `GET /api/v1/auth/tokens` — list PATs (JWT only, no raw token)
+- [x] `DELETE /api/v1/auth/tokens/:id` — revoke PAT (JWT only)
+- [x] Auth middleware supports both JWT and PAT (`requireAuth` vs `requireJwt`)
+- [x] Token format: `ink_` + 64 hex chars, stored as SHA-256 hash
+- [x] Shared types: `PersonalAccessTokenModel`, `PersonalAccessTokenCreatedModel`
+- [x] Postman collection updated with all 3 endpoints
+- [x] AuditLog on create and revoke
 
 ## Phase 8 — MCP Server
-**Status**: Not started
+**Status**: In progress
 **Deliverables**:
-- [ ] MCP server starts and lists tools correctly
-- [ ] Each tool calls the API and returns structured data
-- [ ] `summarize_today` returns data an LLM can summarize without further calls
+- [x] MCP server code with tools (get_clips, get_highlights, search_clips)
+- [x] API client calls REST API with Bearer token auth
+- [ ] End-to-end test: create PAT → configure MCP → verify tools work
 - [ ] All tools handle API errors gracefully
 
 ---
@@ -136,6 +150,10 @@
 - Phase 6: Highlight search uses Prisma `contains + mode: insensitive` (ILIKE) — no tsvector on highlights.
 - Phase 6: `/users/search` route defined before `/:username` in the router to avoid Express route shadowing.
 - Phase 6: `handlePrismaError` used in all new repositories — consistent with established pattern.
+- Phase 7.5: PAT added outside original scope to enable MCP server auth — Google OAuth not viable for headless CLI tools.
+- Phase 7.5: `requireJwt` middleware prevents PATs from managing other PATs — only JWT (Google OAuth) can create/list/revoke tokens.
+- Phase 7.5: Token repositories use generic `findOne(filter)` / `findMany(filter)` instead of per-field finders — reduces method count.
+- Phase 7.5: `isActive` not stored or returned — frontend computes from `revokedAt` and `expiresAt`.
 
 ---
 

@@ -21,12 +21,13 @@ model User {
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at") // soft delete
 
-  clips      Clip[]
-  highlights Highlight[]
-  followers  Follow[]    @relation("following")
-  following  Follow[]    @relation("follower")
-  tags       Tag[]
-  auditLogs  AuditLog[]
+  clips                Clip[]
+  highlights           Highlight[]
+  followers            Follow[]               @relation("following")
+  following            Follow[]               @relation("follower")
+  tags                 Tag[]
+  auditLogs            AuditLog[]
+  personalAccessTokens PersonalAccessToken[]
 
   @@index([email])
   @@index([googleId])
@@ -150,4 +151,25 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── PersonalAccessToken ─────────────────────────────────────────────────────
+// Long-lived tokens for API access (e.g. MCP server, third-party clients).
+// Raw token is never stored — only SHA-256 hash. Shown to user once on creation.
+
+model PersonalAccessToken {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  name       String                          // user-provided label e.g. "Claude Desktop"
+  tokenHash  String    @unique @map("token_hash") // SHA-256 of raw token
+  prefix     String                          // first 12 chars of raw token for display e.g. "ink_a1b2c3d4"
+  lastUsedAt DateTime? @map("last_used_at") // updated on each authenticated request
+  expiresAt  DateTime? @map("expires_at")   // null = never expires
+  createdAt  DateTime  @default(now()) @map("created_at")
+  revokedAt  DateTime? @map("revoked_at")   // null = active
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("personal_access_tokens")
 }

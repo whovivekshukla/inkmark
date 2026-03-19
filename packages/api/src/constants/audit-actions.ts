@@ -20,4 +20,8 @@ export enum AuditAction {
   // Tags
   TAG_CREATED = 'tag.created',
   TAG_DELETED = 'tag.deleted',
+
+  // Personal Access Tokens
+  TOKEN_CREATED = 'token.created',
+  TOKEN_REVOKED = 'token.revoked',
 }

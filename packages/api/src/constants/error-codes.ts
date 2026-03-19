@@ -32,4 +32,8 @@ export enum ErrorCode {
 
   // Tags
   TAG_NOT_FOUND = 'TAG_NOT_FOUND',
+
+  // Personal Access Tokens
+  TOKEN_NOT_FOUND = 'TOKEN_NOT_FOUND',
+  TOKEN_LIMIT_EXCEEDED = 'TOKEN_LIMIT_EXCEEDED',
 }
