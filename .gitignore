@@ -3,3 +3,6 @@ dist/
 .env
 *.log
 .turbo/
+
+# Local pnpm store (if created inside the repo — default is usually global)
+.pnpm-store/

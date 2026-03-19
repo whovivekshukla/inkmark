@@ -1,0 +1,5 @@
+# pnpm store + build noise (keep Cursor/AI away from 10k+ cache files)
+.pnpm-store/
+node_modules/
+dist/
+.turbo/
