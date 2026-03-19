@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { Profile as GoogleProfile } from 'passport-google-oauth20'
-import { UserDTO } from '@inkmark/shared'
+import { UserModel } from '@inkmark/shared'
 import { authRepository } from './auth.repository'
 import { JwtPayload } from './auth.types'
 import { AppError } from '@/lib/errors'
@@ -12,7 +12,7 @@ import { auditLogService } from '@/modules/audit-log'
 import prisma from '@/lib/prisma'
 
 export const authService = {
-  async upsertUserFromGoogle(profile: GoogleProfile): Promise<UserDTO> {
+  async upsertUserFromGoogle(profile: GoogleProfile): Promise<UserModel> {
     try {
       const googleId = profile.id
       const email = profile.emails?.[0]?.value ?? ''
@@ -31,7 +31,7 @@ export const authService = {
           // keeping login behavior consistent with findById's deletedAt: null filter in /auth/me
           update: { displayName, avatarUrl, deletedAt: null },
           create: { googleId, email, username, displayName, avatarUrl },
-          // Include updatedAt to detect create vs update — not exposed in the returned DTO
+          // Include updatedAt to detect create vs update — not exposed in the returned model
           select: { id: true, username: true, email: true, displayName: true, avatarUrl: true, bio: true, createdAt: true, updatedAt: true },
         })
 
@@ -39,9 +39,9 @@ export const authService = {
         // On an update, updatedAt is bumped, making them diverge.
         const isNewUser = upserted.createdAt.getTime() === upserted.updatedAt.getTime()
 
-        // Strip updatedAt — not part of UserDTO
-        const { updatedAt: _discarded, ...userDTO } = upserted
-        return { isNewUser, ...userDTO }
+        // Strip updatedAt — not part of UserModel
+        const { updatedAt: _discarded, ...userModel } = upserted
+        return { isNewUser, ...userModel }
       })
 
       await auditLogService.log({
@@ -78,7 +78,7 @@ export const authService = {
     }
   },
 
-  async getMe(userId: string): Promise<UserDTO> {
+  async getMe(userId: string): Promise<UserModel> {
     try {
       const user = await authRepository.findById(userId)
       if (!user) throw new AppError(ErrorCode.UNAUTHORIZED, 'User not found', 401)

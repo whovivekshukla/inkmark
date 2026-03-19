@@ -1,4 +1,4 @@
-import { ClipDTO, ClipTagDTO } from '@inkmark/shared'
+import { ClipModel, ClipTagModel } from '@inkmark/shared'
 import prisma from '@/lib/prisma'
 import { CreateClipData, UpdateClipData, UpdateClipMetadataData, GetClipsFilters } from './clips.types'
 
@@ -6,7 +6,7 @@ export const clipRepository = {
   async getAll(
     userId: string,
     filters: GetClipsFilters,
-  ): Promise<{ clips: ClipDTO[]; total: number }> {
+  ): Promise<{ clips: ClipModel[]; total: number }> {
     const where = {
       userId,
       deletedAt: null,
@@ -37,14 +37,14 @@ export const clipRepository = {
     return { clips, total }
   },
 
-  async findById(clipId: string): Promise<ClipDTO | null> {
+  async findById(clipId: string): Promise<ClipModel | null> {
     return prisma.clip.findFirst({
       where: { id: clipId, deletedAt: null },
       include: { tags: { include: { tag: true } } },
     })
   },
 
-  async create(data: CreateClipData): Promise<ClipDTO> {
+  async create(data: CreateClipData): Promise<ClipModel> {
     const { userId, url, domain, ...rest } = data
     return prisma.clip.create({
       data: { userId, url, domain, ...rest },
@@ -52,7 +52,7 @@ export const clipRepository = {
     })
   },
 
-  async update(clipId: string, data: UpdateClipData): Promise<ClipDTO> {
+  async update(clipId: string, data: UpdateClipData): Promise<ClipModel> {
     return prisma.clip.update({
       where: { id: clipId },
       data,
@@ -74,7 +74,7 @@ export const clipRepository = {
     })
   },
 
-  async setTags(userId: string, clipId: string, tagNames: string[]): Promise<ClipTagDTO[]> {
+  async setTags(userId: string, clipId: string, tagNames: string[]): Promise<ClipTagModel[]> {
     const normalized = tagNames.map((n) => n.toLowerCase().trim()).filter(Boolean)
     if (normalized.length === 0) return []
 
@@ -97,7 +97,7 @@ export const clipRepository = {
     })
   },
 
-  async addTag(userId: string, clipId: string, tagName: string): Promise<ClipTagDTO> {
+  async addTag(userId: string, clipId: string, tagName: string): Promise<ClipTagModel> {
     const name = tagName.toLowerCase().trim()
     return prisma.$transaction(async (tx) => {
       const tag = await tx.tag.upsert({

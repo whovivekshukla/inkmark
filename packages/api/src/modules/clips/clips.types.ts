@@ -1,4 +1,4 @@
-export interface CreateClipDTO {
+export interface CreateClipModel {
   url: string
   title?: string
   description?: string
@@ -8,7 +8,7 @@ export interface CreateClipDTO {
   tags?: string[]
 }
 
-export interface UpdateClipDTO {
+export interface UpdateClipModel {
   title?: string
   isPublic?: boolean
 }

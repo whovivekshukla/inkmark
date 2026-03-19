@@ -1,4 +1,4 @@
-export interface ClipDTO {
+export interface ClipModel {
   id: string
   userId: string
   url: string
@@ -10,10 +10,10 @@ export interface ClipDTO {
   isPublic: boolean
   savedAt: Date
   updatedAt: Date
-  tags?: ClipTagDTO[]
+  tags?: ClipTagModel[]
 }
 
-export interface ClipTagDTO {
+export interface ClipTagModel {
   clipId: string
   tagId: string
   tag: {
@@ -22,13 +22,13 @@ export interface ClipTagDTO {
   }
 }
 
-export interface CreateClipDTO {
+export interface CreateClipModel {
   url: string
   isPublic?: boolean
   tags?: string[]
 }
 
-export interface UpdateClipDTO {
+export interface UpdateClipModel {
   title?: string
   isPublic?: boolean
 }

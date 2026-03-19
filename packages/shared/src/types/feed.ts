@@ -1,12 +1,12 @@
-import type { ClipDTO } from './clip'
-import type { HighlightDTO } from './highlight'
+import type { ClipModel } from './clip'
+import type { HighlightModel } from './highlight'
 
 export type FeedItemType = 'clip' | 'highlight'
 
-export interface FeedItemDTO {
+export interface FeedItemModel {
   type: FeedItemType
-  clip?: ClipDTO
-  highlight?: HighlightDTO
+  clip?: ClipModel
+  highlight?: HighlightModel
   actorId: string
   actorUsername: string
   actorDisplayName: string

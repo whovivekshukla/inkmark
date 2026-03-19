@@ -1,4 +1,11 @@
-export interface HighlightDTO {
+export enum HighlightColor {
+  Yellow = 'yellow',
+  Green = 'green',
+  Blue = 'blue',
+  Pink = 'pink',
+}
+
+export interface HighlightModel {
   id: string
   clipId: string
   userId: string
@@ -10,10 +17,15 @@ export interface HighlightDTO {
   updatedAt: Date
 }
 
-export interface CreateHighlightDTO {
+export interface CreateHighlightModel {
   clipId: string
   text: string
   contextBefore?: string
   contextAfter?: string
-  color?: 'yellow' | 'green' | 'blue' | 'pink'
+  color?: HighlightColor
+}
+
+export interface UpdateHighlightModel {
+  color?: HighlightColor
+  text?: string
 }

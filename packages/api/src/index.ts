@@ -7,6 +7,7 @@ import { errorHandler } from '@/middleware/error'
 import { logger } from '@/lib/logger'
 import { authRouter } from '@/modules/auth'
 import { clipsRouter } from '@/modules/clips'
+import { highlightsRouter } from '@/modules/highlights'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -26,6 +27,7 @@ app.get('/health', (_req, res) => {
 const v1Router = express.Router()
 v1Router.use('/auth', authRouter)
 v1Router.use('/clips', clipsRouter)
+v1Router.use('/highlights', highlightsRouter)
 app.use('/api/v1', v1Router)
 
 // Global error handler must be mounted last

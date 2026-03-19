@@ -1,10 +1,11 @@
 export type { ApiResponse, PaginationMeta, ApiError, PaginationQuery } from './types/api'
-export type { UserDTO } from './types/user'
+export type { UserModel } from './types/user'
 export type {
-  ClipDTO,
-  ClipTagDTO,
-  CreateClipDTO,
-  UpdateClipDTO,
+  ClipModel,
+  ClipTagModel,
+  CreateClipModel,
+  UpdateClipModel,
 } from './types/clip'
-export type { HighlightDTO, CreateHighlightDTO } from './types/highlight'
-export type { FeedItemDTO, FeedItemType } from './types/feed'
+export { HighlightColor } from './types/highlight'
+export type { HighlightModel, CreateHighlightModel, UpdateHighlightModel } from './types/highlight'
+export type { FeedItemModel, FeedItemType } from './types/feed'

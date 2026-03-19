@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { clipController } from './clips.controller'
+import { highlightController } from '@/modules/highlights/highlights.controller'
 import { requireAuth } from '@/middleware/auth'
 import { validate } from '@/middleware/validate'
 import {
@@ -21,5 +22,8 @@ router.delete('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), clipCo
 
 router.post('/:id/tags', requireAuth, validate(ClipIdParamSchema, 'params'), validate(AddTagSchema), clipController.addTag)
 router.delete('/:id/tags/:tagId', requireAuth, validate(TagIdParamSchema, 'params'), clipController.removeTag)
+
+// Nested highlights — GET /clips/:id/highlights
+router.get('/:id/highlights', requireAuth, validate(ClipIdParamSchema, 'params'), highlightController.getByClip)
 
 export default router

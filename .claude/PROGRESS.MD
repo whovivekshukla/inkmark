@@ -1,6 +1,6 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 3 — Clips
+## Current phase: Phase 4 — Highlights
 ## Status: Complete
 
 ---
@@ -11,8 +11,7 @@
 - [x] Phase 1 — Prisma Schema + Database Setup
 - [x] Phase 2 — Auth (Google OAuth + JWT)
 - [x] Phase 3 — Clips
-- [ ] Phase 3 — Clips
-- [ ] Phase 4 — Highlights
+- [x] Phase 4 — Highlights
 - [ ] Phase 5 — Follows + Feed
 - [ ] Phase 6 — Users + Search
 - [ ] Phase 7 — Tags
@@ -57,12 +56,12 @@
 - [x] AuditLog written on every mutation via dedicated auditLog module
 
 ## Phase 4 — Highlights
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] Highlights on a public clip visible to anyone with clip access
-- [ ] Highlights on a private clip only visible to owner
-- [ ] Soft delete works
-- [ ] AuditLog written on every mutation
+- [x] Highlights on a public clip visible to anyone with clip access
+- [x] Highlights on a private clip only visible to owner
+- [x] Soft delete works
+- [x] AuditLog written on every mutation
 
 ## Phase 5 — Follows + Feed
 **Status**: Not started
@@ -120,6 +119,12 @@
 - Phase 3: `auditLogService` module created — all services call `auditLogService.log()` instead of Prisma directly. Audit log failures are caught and logged, never propagated.
 - Phase 3: Module barrel exports (`index.ts`) added to each module — imports use `@/modules/audit-log` not deep paths.
 - Phase 3: Partial index `clips_user_active_saved_idx ON clips(user_id, saved_at DESC) WHERE deleted_at IS NULL` added for getAll query performance.
+- Phase 4: Renamed all `*DTO` types to `*Model` across shared package and API consumers.
+- Phase 4: Added `HighlightColor` enum to shared types — used in schemas via `z.nativeEnum()`.
+- Phase 4: `createHighlight` does NOT pre-check clip existence — relies on DB FK constraint (P2003 → global handler → 400).
+- Phase 4: `GET /clips/:id/highlights` mounted on clips router (nested resource); POST/PATCH/DELETE on `/highlights` router.
+- Phase 4: Repository methods have no try/catch and no explicit select — follows clips.repository.ts pattern.
+- Phase 4: Updated `.claude/rules/error-handling.md` — repositories no longer require try/catch.
 
 ---
 

@@ -1,0 +1,5 @@
+export { highlightService } from './highlights.service'
+export { highlightRepository } from './highlights.repository'
+export { highlightController } from './highlights.controller'
+export { default as highlightsRouter } from './highlights.router'
+export type { CreateHighlightData, UpdateHighlightData } from './highlights.types'

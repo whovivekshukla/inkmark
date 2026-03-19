@@ -1,0 +1,1212 @@
+{
+  "info": {
+    "name": "Inkmark API",
+    "description": "Inkmark — social reading app. Clip articles, highlight text, follow others.\n\n## Authentication\nAll protected endpoints require a Bearer token in the `Authorization` header. Obtain a token by completing the Google OAuth flow at `GET /api/v1/auth/google`.\n\n## Response Format\nAll responses use the `ApiResponse<T>` envelope:\n- **Success**: `{ success: true, data: T, meta?: PaginationMeta }`\n- **Error**: `{ success: false, error: { code: string, message: string } }`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clipId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "highlightId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tagId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Google OAuth 2.0 authentication and user session management.",
+      "item": [
+        {
+          "name": "Google OAuth — Initiate Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google"]
+            },
+            "description": "Redirects to Google OAuth consent screen. After the user grants access, Google redirects back to the callback URL which issues a JWT token.\n\n**Open this URL in a browser** — it initiates a redirect flow, not a JSON response."
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth — Callback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback?code=GOOGLE_AUTH_CODE",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "google", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "GOOGLE_AUTH_CODE",
+                  "description": "Authorization code from Google (set automatically by the OAuth flow)"
+                }
+              ]
+            },
+            "description": "Handles the OAuth callback from Google. Upserts the user and redirects to `CLIENT_REDIRECT_URL?token=<JWT>`.\n\n**Do not call this manually** — it's handled by the OAuth redirect flow."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Returns the authenticated user's profile."
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "me"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1abc123def456\",\n    \"username\": \"vivek_42\",\n    \"email\": \"vivek@example.com\",\n    \"displayName\": \"Vivek Shukla\",\n    \"avatarUrl\": \"https://lh3.googleusercontent.com/a/photo\",\n    \"bio\": null,\n    \"createdAt\": \"2025-01-15T10:30:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "401 — Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "me"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"AUTH_TOKEN_MISSING\",\n    \"message\": \"Authorization header is required\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Stateless logout — the server returns 204 and the client should drop the stored token."
+          },
+          "response": [
+            {
+              "name": "204 — No Content",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clips",
+      "description": "CRUD for clips (saved articles/URLs). Includes tag management and nested highlights.",
+      "item": [
+        {
+          "name": "Create Clip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('clipId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/article\",\n  \"title\": \"Interesting Article\",\n  \"description\": \"A deep dive into something fascinating\",\n  \"ogImage\": \"https://example.com/og-image.jpg\",\n  \"faviconUrl\": \"https://example.com/favicon.ico\",\n  \"isPublic\": true,\n  \"tags\": [\"reading\", \"tech\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clips",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips"]
+            },
+            "description": "Creates a new clip. The `clipId` collection variable is auto-set from the response.\n\n**Required**: `url` (valid URL)\n**Optional**: `title`, `description`, `ogImage`, `faviconUrl`, `isPublic` (default: true), `tags` (array of tag names)"
+          },
+          "response": [
+            {
+              "name": "201 — Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://example.com/article\",\n  \"title\": \"Interesting Article\",\n  \"description\": \"A deep dive into something fascinating\",\n  \"isPublic\": true,\n  \"tags\": [\"reading\", \"tech\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/clips",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1clip1234abcd\",\n    \"userId\": \"clx1abc123def456\",\n    \"url\": \"https://example.com/article\",\n    \"domain\": \"example.com\",\n    \"title\": \"Interesting Article\",\n    \"description\": \"A deep dive into something fascinating\",\n    \"ogImage\": null,\n    \"faviconUrl\": null,\n    \"isPublic\": true,\n    \"savedAt\": \"2025-01-15T12:00:00.000Z\",\n    \"updatedAt\": \"2025-01-15T12:00:00.000Z\",\n    \"tags\": [\n      {\n        \"clipId\": \"clx1clip1234abcd\",\n        \"tagId\": \"clx1tag001\",\n        \"tag\": { \"id\": \"clx1tag001\", \"name\": \"reading\" }\n      },\n      {\n        \"clipId\": \"clx1clip1234abcd\",\n        \"tagId\": \"clx1tag002\",\n        \"tag\": { \"id\": \"clx1tag002\", \"name\": \"tech\" }\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "400 — Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"not-a-valid-url\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/clips",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid url\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Clips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clips?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Page number (default: 1)" },
+                { "key": "limit", "value": "20", "description": "Items per page (default: 20, max: 100)" },
+                { "key": "tag", "value": "tech", "description": "Filter by tag name", "disabled": true },
+                { "key": "domain", "value": "example.com", "description": "Filter by domain", "disabled": true },
+                { "key": "from", "value": "2025-01-01T00:00:00.000Z", "description": "Filter clips saved on or after (ISO 8601)", "disabled": true },
+                { "key": "to", "value": "2025-12-31T23:59:59.999Z", "description": "Filter clips saved on or before (ISO 8601)", "disabled": true }
+              ]
+            },
+            "description": "Returns the authenticated user's clips, paginated. All query parameters are optional."
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"clx1clip1234abcd\",\n      \"userId\": \"clx1abc123def456\",\n      \"url\": \"https://example.com/article\",\n      \"domain\": \"example.com\",\n      \"title\": \"Interesting Article\",\n      \"description\": \"A deep dive into something fascinating\",\n      \"ogImage\": null,\n      \"faviconUrl\": null,\n      \"isPublic\": true,\n      \"savedAt\": \"2025-01-15T12:00:00.000Z\",\n      \"updatedAt\": \"2025-01-15T12:00:00.000Z\",\n      \"tags\": []\n    }\n  ],\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 20,\n    \"total\": 1,\n    \"hasMore\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Clip by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}"]
+            },
+            "description": "Returns a single clip by ID. Users can view their own clips or any public clip."
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1clip1234abcd\",\n    \"userId\": \"clx1abc123def456\",\n    \"url\": \"https://example.com/article\",\n    \"domain\": \"example.com\",\n    \"title\": \"Interesting Article\",\n    \"description\": \"A deep dive into something fascinating\",\n    \"ogImage\": null,\n    \"faviconUrl\": null,\n    \"isPublic\": true,\n    \"savedAt\": \"2025-01-15T12:00:00.000Z\",\n    \"updatedAt\": \"2025-01-15T12:00:00.000Z\",\n    \"tags\": []\n  }\n}"
+            },
+            {
+              "name": "404 — Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/nonexistent_id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "nonexistent_id"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CLIP_NOT_FOUND\",\n    \"message\": \"Clip not found\"\n  }\n}"
+            },
+            {
+              "name": "403 — Forbidden (private clip)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/someone_elses_private_clip",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "someone_elses_private_clip"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CLIP_FORBIDDEN\",\n    \"message\": \"Access denied\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Clip",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"isPublic\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}"]
+            },
+            "description": "Partially updates a clip. Only the owner can update.\n\n**Optional fields**: `title` (min 1 char), `isPublic` (boolean)"
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Title\",\n  \"isPublic\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1clip1234abcd\",\n    \"userId\": \"clx1abc123def456\",\n    \"url\": \"https://example.com/article\",\n    \"domain\": \"example.com\",\n    \"title\": \"Updated Title\",\n    \"description\": \"A deep dive into something fascinating\",\n    \"ogImage\": null,\n    \"faviconUrl\": null,\n    \"isPublic\": false,\n    \"savedAt\": \"2025-01-15T12:00:00.000Z\",\n    \"updatedAt\": \"2025-01-15T12:30:00.000Z\",\n    \"tags\": []\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Clip",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}"]
+            },
+            "description": "Soft-deletes a clip (sets `deletedAt` timestamp). Only the owner can delete."
+          },
+          "response": [
+            {
+              "name": "204 — No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Add Tag to Clip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('tagId', json.data.tagId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"javascript\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}", "tags"]
+            },
+            "description": "Adds a tag to a clip. Creates the tag if it doesn't exist (upsert). Tag names are lowercased and trimmed. The `tagId` collection variable is auto-set from the response.\n\n**Required**: `name` (1-50 chars)"
+          },
+          "response": [
+            {
+              "name": "201 — Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"javascript\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}/tags",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}", "tags"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"clipId\": \"clx1clip1234abcd\",\n    \"tagId\": \"clx1tag003\",\n    \"tag\": {\n      \"id\": \"clx1tag003\",\n      \"name\": \"javascript\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Remove Tag from Clip",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}/tags/{{tagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}", "tags", "{{tagId}}"]
+            },
+            "description": "Removes a tag from a clip. Does not delete the tag itself — only the clip-tag association."
+          },
+          "response": [
+            {
+              "name": "204 — No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}/tags/{{tagId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}", "tags", "{{tagId}}"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Get Highlights for Clip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clips/{{clipId}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["clips", "{{clipId}}", "highlights"]
+            },
+            "description": "Returns all highlights for a clip, ordered by `createdAt` ascending.\n\n- **Public clip**: any authenticated user can view highlights\n- **Private clip**: only the owner can view highlights"
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/{{clipId}}/highlights",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "{{clipId}}", "highlights"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"clx1hl001\",\n      \"clipId\": \"clx1clip1234abcd\",\n      \"userId\": \"clx1abc123def456\",\n      \"text\": \"This is a highlighted passage from the article.\",\n      \"contextBefore\": \"The author wrote: \",\n      \"contextAfter\": \" which was quite insightful.\",\n      \"color\": \"yellow\",\n      \"createdAt\": \"2025-01-15T13:00:00.000Z\",\n      \"updatedAt\": \"2025-01-15T13:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "403 — Private clip (not owner)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/clips/someone_elses_private_clip/highlights",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clips", "someone_elses_private_clip", "highlights"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"CLIP_NOT_ACCESSIBLE\",\n    \"message\": \"Clip is not accessible\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Highlights",
+      "description": "Create, update, and delete highlights anchored to clips.",
+      "item": [
+        {
+          "name": "Create Highlight",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('highlightId', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clipId\": \"{{clipId}}\",\n  \"text\": \"This is a highlighted passage from the article.\",\n  \"contextBefore\": \"The author wrote: \",\n  \"contextAfter\": \" which was quite insightful.\",\n  \"color\": \"yellow\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlights"]
+            },
+            "description": "Creates a highlight on a clip. The DB FK constraint validates that `clipId` exists. The `highlightId` collection variable is auto-set from the response.\n\n**Required**: `clipId`, `text` (1-5000 chars)\n**Optional**: `contextBefore` (max 200), `contextAfter` (max 200), `color` (yellow|green|blue|pink, default: yellow)"
+          },
+          "response": [
+            {
+              "name": "201 — Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clipId\": \"clx1clip1234abcd\",\n  \"text\": \"This is a highlighted passage from the article.\",\n  \"contextBefore\": \"The author wrote: \",\n  \"contextAfter\": \" which was quite insightful.\",\n  \"color\": \"yellow\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlights",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1hl001\",\n    \"clipId\": \"clx1clip1234abcd\",\n    \"userId\": \"clx1abc123def456\",\n    \"text\": \"This is a highlighted passage from the article.\",\n    \"contextBefore\": \"The author wrote: \",\n    \"contextAfter\": \" which was quite insightful.\",\n    \"color\": \"yellow\",\n    \"createdAt\": \"2025-01-15T13:00:00.000Z\",\n    \"updatedAt\": \"2025-01-15T13:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "400 — Invalid clipId (FK constraint)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clipId\": \"nonexistent_clip_id\",\n  \"text\": \"Some highlight text\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlights",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid relationship reference\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Highlight",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"color\": \"green\",\n  \"text\": \"Updated highlight text.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/highlights/{{highlightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlights", "{{highlightId}}"]
+            },
+            "description": "Partially updates a highlight. Only the owner can update.\n\n**Optional fields**: `color` (yellow|green|blue|pink), `text` (1-5000 chars)"
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"color\": \"green\",\n  \"text\": \"Updated highlight text.\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlights/{{highlightId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights", "{{highlightId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1hl001\",\n    \"clipId\": \"clx1clip1234abcd\",\n    \"userId\": \"clx1abc123def456\",\n    \"text\": \"Updated highlight text.\",\n    \"contextBefore\": \"The author wrote: \",\n    \"contextAfter\": \" which was quite insightful.\",\n    \"color\": \"green\",\n    \"createdAt\": \"2025-01-15T13:00:00.000Z\",\n    \"updatedAt\": \"2025-01-15T13:30:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "404 — Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"color\": \"green\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/highlights/nonexistent_id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights", "nonexistent_id"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"HIGHLIGHT_NOT_FOUND\",\n    \"message\": \"Highlight not found\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Highlight",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/highlights/{{highlightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["highlights", "{{highlightId}}"]
+            },
+            "description": "Soft-deletes a highlight (sets `deletedAt` timestamp). Only the owner can delete."
+          },
+          "response": [
+            {
+              "name": "204 — No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/highlights/{{highlightId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights", "{{highlightId}}"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "403 — Forbidden (not owner)",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/highlights/someone_elses_highlight",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["highlights", "someone_elses_highlight"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"HIGHLIGHT_FORBIDDEN\",\n    \"message\": \"Access denied\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users (planned)",
+      "description": "Public user profiles and user search. **Not yet implemented** — included as placeholders for Phase 6.",
+      "item": [
+        {
+          "name": "Get Public Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{username}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{username}}"]
+            },
+            "description": "Returns a user's public profile by username."
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/users/vivek_42",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["users", "vivek_42"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"clx1abc123def456\",\n    \"username\": \"vivek_42\",\n    \"email\": \"vivek@example.com\",\n    \"displayName\": \"Vivek Shukla\",\n    \"avatarUrl\": \"https://lh3.googleusercontent.com/a/photo\",\n    \"bio\": \"I read a lot.\",\n    \"createdAt\": \"2025-01-15T10:30:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get User's Public Clips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{username}}/clips?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{username}}", "clips"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns a user's public clips (only `isPublic: true`), paginated."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User's Public Highlights",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{username}}/highlights?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{username}}", "highlights"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns highlights on a user's public clips, paginated."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/search?q=vivek",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "search"],
+              "query": [
+                { "key": "q", "value": "vivek", "description": "Search by username or display name (case-insensitive)" }
+              ]
+            },
+            "description": "Searches users by username or display name. Case-insensitive ILIKE match. Max 20 results."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Follows (planned)",
+      "description": "Follow/unfollow users and view follower lists. **Not yet implemented** — included as placeholders for Phase 5.",
+      "item": [
+        {
+          "name": "Follow User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/follows/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["follows", "{{userId}}"]
+            },
+            "description": "Follow a user. Cannot follow yourself (400). Already following returns 409."
+          },
+          "response": [
+            {
+              "name": "201 — Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/follows/{{userId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["follows", "{{userId}}"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"followerId\": \"clx1abc123def456\",\n    \"followingId\": \"clx1user789ghi\",\n    \"createdAt\": \"2025-01-15T14:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Unfollow User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/follows/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["follows", "{{userId}}"]
+            },
+            "description": "Unfollow a user. Returns 404 if not currently following."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Followers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/follows/{{userId}}/followers?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["follows", "{{userId}}", "followers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns paginated list of users following the target user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/follows/{{userId}}/following?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["follows", "{{userId}}", "following"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns paginated list of users the target user is following."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed (planned)",
+      "description": "Paginated feed of clips and highlights from followed users. **Not yet implemented** — included as placeholders for Phase 5.",
+      "item": [
+        {
+          "name": "Get Feed (Clips)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/feed?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["feed"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns paginated public clips from followed users, ordered by `savedAt` descending."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Feed (Highlights)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/feed/highlights?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["feed", "highlights"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Returns paginated highlights on public clips from followed users."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tags (planned)",
+      "description": "Tag management — CRUD for user's own tags. **Not yet implemented** — included as placeholders for Phase 7.",
+      "item": [
+        {
+          "name": "List Tags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags"]
+            },
+            "description": "Returns the authenticated user's tags with clip counts."
+          },
+          "response": [
+            {
+              "name": "200 — Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tags",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["tags"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"clx1tag001\",\n      \"name\": \"reading\",\n      \"_count\": { \"clips\": 5 }\n    },\n    {\n      \"id\": \"clx1tag002\",\n      \"name\": \"tech\",\n      \"_count\": { \"clips\": 3 }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"design\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags"]
+            },
+            "description": "Creates a new tag. Tag names are lowercased and trimmed."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tags/{{tagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags", "{{tagId}}"]
+            },
+            "description": "Deletes a tag. Cascades to remove all clip-tag associations."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search (planned)",
+      "description": "Full-text search across clips and highlights. **Not yet implemented** — included as placeholder for Phase 6.",
+      "item": [
+        {
+          "name": "Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=javascript&type=clips&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "javascript", "description": "Search query" },
+                { "key": "type", "value": "clips", "description": "clips | highlights | all" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "from", "value": "2025-01-01T00:00:00.000Z", "description": "Filter from date", "disabled": true },
+                { "key": "to", "value": "2025-12-31T23:59:59.999Z", "description": "Filter to date", "disabled": true }
+              ]
+            },
+            "description": "Full-text search using PostgreSQL tsvector. Ranked by `ts_rank`. Searches user's own clips by default."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "Health check endpoint — outside `/api/v1/` for load balancer access.",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["health"]
+            },
+            "description": "Returns 200 if the server is running. No auth required."
+          },
+          "response": [
+            {
+              "name": "200 — OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/health",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "3000",
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"status\": \"ok\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

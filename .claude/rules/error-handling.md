@@ -41,8 +41,8 @@ The handler:
 - Never sends stack traces in responses
 
 ## Try/catch
-All async service and repository methods are wrapped in try/catch.
-Controllers don't need try/catch — they throw and the global handler catches.
+Services wrap async methods in try/catch to re-throw as `AppError` with business context.
+Controllers and repositories do NOT need try/catch — the global error handler catches all Prisma errors and unknown errors automatically.
 
 ```typescript
 // ✓ service with try/catch

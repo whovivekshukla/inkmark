@@ -1,4 +1,4 @@
-import { UserDTO } from '@inkmark/shared'
+import { UserModel } from '@inkmark/shared'
 import prisma from '@/lib/prisma'
 import { logger } from '@/lib/logger'
 import { AppError } from '@/lib/errors'
@@ -17,7 +17,7 @@ const USER_SELECT = {
 } as const
 
 export const authRepository = {
-  async findByGoogleId(googleId: string): Promise<UserDTO | null> {
+  async findByGoogleId(googleId: string): Promise<UserModel | null> {
     try {
       return await prisma.user.findFirst({
         where: { googleId, deletedAt: null },
@@ -29,7 +29,7 @@ export const authRepository = {
     }
   },
 
-  async findById(id: string): Promise<UserDTO | null> {
+  async findById(id: string): Promise<UserModel | null> {
     try {
       return await prisma.user.findUnique({
         where: { id, deletedAt: null },
@@ -41,7 +41,7 @@ export const authRepository = {
     }
   },
 
-  async createUser(data: CreateUserData): Promise<UserDTO> {
+  async createUser(data: CreateUserData): Promise<UserModel> {
     try {
       return await prisma.user.create({
         data: {
@@ -60,7 +60,7 @@ export const authRepository = {
     }
   },
 
-  async updateUser(id: string, data: UpdateUserData): Promise<UserDTO> {
+  async updateUser(id: string, data: UpdateUserData): Promise<UserModel> {
     try {
       return await prisma.user.update({
         where: { id },

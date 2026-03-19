@@ -1,6 +1,6 @@
-import { ClipDTO, ClipTagDTO, PaginationMeta } from '@inkmark/shared'
+import { ClipModel, ClipTagModel, PaginationMeta } from '@inkmark/shared'
 import { clipRepository } from './clips.repository'
-import { CreateClipDTO, UpdateClipDTO, GetClipsFilters, UpdateClipData } from './clips.types'
+import { CreateClipModel, UpdateClipModel, GetClipsFilters, UpdateClipData } from './clips.types'
 import { auditLogService } from '@/modules/audit-log'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
@@ -14,7 +14,7 @@ function assertOwnership(clip: { userId: string }, userId: string): void {
 }
 
 export const clipService = {
-  async createClip(userId: string, dto: CreateClipDTO): Promise<ClipDTO> {
+  async createClip(userId: string, dto: CreateClipModel): Promise<ClipModel> {
     try {
       let domain: string
       try {
@@ -58,7 +58,7 @@ export const clipService = {
   async getClips(
     userId: string,
     filters: GetClipsFilters,
-  ): Promise<{ clips: ClipDTO[]; meta: PaginationMeta }> {
+  ): Promise<{ clips: ClipModel[]; meta: PaginationMeta }> {
     try {
       const { clips, total } = await clipRepository.getAll(userId, filters)
       return {
@@ -77,7 +77,7 @@ export const clipService = {
     }
   },
 
-  async getClipById(requestingUserId: string, clipId: string): Promise<ClipDTO> {
+  async getClipById(requestingUserId: string, clipId: string): Promise<ClipModel> {
     try {
       const clip = await clipRepository.findById(clipId)
       if (!clip) throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
@@ -92,7 +92,7 @@ export const clipService = {
     }
   },
 
-  async updateClip(userId: string, clipId: string, dto: UpdateClipDTO): Promise<ClipDTO> {
+  async updateClip(userId: string, clipId: string, dto: UpdateClipModel): Promise<ClipModel> {
     try {
       const clip = await clipRepository.findById(clipId)
       if (!clip) throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
@@ -138,7 +138,7 @@ export const clipService = {
     }
   },
 
-  async addTagToClip(userId: string, clipId: string, tagName: string): Promise<ClipTagDTO> {
+  async addTagToClip(userId: string, clipId: string, tagName: string): Promise<ClipTagModel> {
     try {
       const clip = await clipRepository.findById(clipId)
       if (!clip) throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
