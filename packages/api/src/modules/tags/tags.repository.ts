@@ -7,7 +7,7 @@ export const tagsRepository = {
     try {
       return await prisma.tag.findMany({
         where: { userId },
-        include: { _count: { select: { clips: true } } },
+        include: { _count: { select: { clips: { where: { clip: { deletedAt: null } } } } } },
         orderBy: { name: 'asc' },
       })
     } catch (err) {

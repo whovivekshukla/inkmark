@@ -29,7 +29,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
     }
 
     // Fire-and-forget — must not block the request
-    void tokensRepository.updateLastUsed(pat.id)
+    tokensRepository.updateLastUsed(pat.id).catch(() => {})
 
     req.user = { userId: pat.userId }
     next()
