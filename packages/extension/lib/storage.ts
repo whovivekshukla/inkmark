@@ -78,3 +78,14 @@ export async function setCachedHighlights<T>(url: string, highlights: T[]): Prom
 export async function clearCachedHighlights(url: string): Promise<void> {
   await chrome.storage.local.remove(highlightCacheKey(url))
 }
+
+/** Remove all URL-keyed clip/highlight caches (call on sign-out / account switch). */
+export async function clearAllInkmarkUrlCaches(): Promise<void> {
+  const all = await chrome.storage.local.get(null)
+  const keys = Object.keys(all).filter(
+    (k) => k.startsWith('inkmark_clip_') || k.startsWith('inkmark_hl_'),
+  )
+  if (keys.length > 0) {
+    await chrome.storage.local.remove(keys)
+  }
+}

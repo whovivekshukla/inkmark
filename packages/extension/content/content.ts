@@ -435,34 +435,91 @@ document.addEventListener('scroll', () => { dismissTooltip(); tooltipTarget = nu
 
 // ─── Text matching + restore ───────────────────────────────────────────────
 
-function findTextNode(text: string): { node: Text; offset: number } | null {
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-  const normalizedSearch = text.replace(/\s+/g, ' ').trim()
+function normalizeWs(s: string): string {
+  return s.replace(/\s+/g, ' ').trim()
+}
 
-  let node: Text | null
-  while ((node = walker.nextNode() as Text | null)) {
-    const content = node.textContent ?? ''
-    const normalizedContent = content.replace(/\s+/g, ' ')
-    const idx = normalizedContent.indexOf(normalizedSearch)
-    if (idx !== -1) {
-      return { node, offset: idx }
+interface TextMatch {
+  node: Text
+  start: number
+  end: number
+}
+
+/** Occurrences of `search` in text nodes outside existing Inkmark marks (document order). */
+function collectDocumentTextMatches(search: string): TextMatch[] {
+  const out: TextMatch[] = []
+  if (!search) return out
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if ((node as Text).parentElement?.closest(`.${HIGHLIGHT_CLASS}`)) {
+        return NodeFilter.FILTER_REJECT
+      }
+      return NodeFilter.FILTER_ACCEPT
+    },
+  })
+
+  let n: Node | null
+  while ((n = walker.nextNode())) {
+    const textNode = n as Text
+    const content = textNode.textContent ?? ''
+    let pos = 0
+    while (pos <= content.length - search.length) {
+      const idx = content.indexOf(search, pos)
+      if (idx === -1) break
+      out.push({ node: textNode, start: idx, end: idx + search.length })
+      pos = idx + search.length
     }
   }
+  return out
+}
 
-  return null
+const CONTEXT_WINDOW = 120
+
+function scoreContextMatch(h: HighlightForRestore, beforeWindow: string, afterWindow: string): number {
+  const wantB = normalizeWs(h.contextBefore ?? '')
+  const wantA = normalizeWs(h.contextAfter ?? '')
+  if (!wantB && !wantA) return 0
+
+  const gotB = normalizeWs(beforeWindow)
+  const gotA = normalizeWs(afterWindow)
+  let score = 0
+  if (wantB) {
+    if (gotB.endsWith(wantB)) score += wantB.length + 2
+    else if (gotB.includes(wantB)) score += wantB.length
+  }
+  if (wantA) {
+    if (gotA.startsWith(wantA)) score += wantA.length + 2
+    else if (gotA.includes(wantA)) score += wantA.length
+  }
+  return score
 }
 
 function markTextOnPage(highlight: HighlightForRestore): void {
-  const match = findTextNode(highlight.text)
-  if (!match) return
+  const search = highlight.text
+  const candidates = collectDocumentTextMatches(search)
+  if (candidates.length === 0) return
 
-  const { node, offset } = match
-  const normalizedSearch = highlight.text.replace(/\s+/g, ' ').trim()
+  let bestI = 0
+  let bestScore = -1
+  for (let i = 0; i < candidates.length; i++) {
+    const { node, start, end } = candidates[i]
+    const full = node.textContent ?? ''
+    const beforeWindow = full.slice(Math.max(0, start - CONTEXT_WINDOW), start)
+    const afterWindow = full.slice(end, Math.min(full.length, end + CONTEXT_WINDOW))
+    const s = scoreContextMatch(highlight, beforeWindow, afterWindow)
+    if (s > bestScore) {
+      bestScore = s
+      bestI = i
+    }
+  }
+
+  const { node, start, end } = candidates[bestI]
 
   try {
     const range = document.createRange()
-    range.setStart(node, offset)
-    range.setEnd(node, offset + normalizedSearch.length)
+    range.setStart(node, start)
+    range.setEnd(node, end)
 
     const mark = document.createElement('mark')
     mark.className = `${HIGHLIGHT_CLASS} ${highlight.isOwn ? HIGHLIGHT_OWN_CLASS : HIGHLIGHT_OTHER_CLASS}`

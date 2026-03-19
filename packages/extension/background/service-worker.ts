@@ -16,6 +16,8 @@ function toRestorePayload(highlights: HighlightWithUserModel[], currentUserId: s
   return highlights.map((h) => ({
     id: h.id,
     text: h.text,
+    contextBefore: h.contextBefore,
+    contextAfter: h.contextAfter,
     userId: h.userId,
     isOwn: h.userId === currentUserId,
     createdAt: String(h.createdAt),

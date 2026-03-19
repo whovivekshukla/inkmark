@@ -50,6 +50,8 @@ export interface ClipStatusResponse {
 export interface HighlightForRestore {
   id: string
   text: string
+  contextBefore: string | null
+  contextAfter: string | null
   userId: string
   isOwn: boolean
   createdAt: string

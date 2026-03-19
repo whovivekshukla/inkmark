@@ -90,53 +90,6 @@ export const authService = {
     }
   },
 
-  async exchangeGoogleToken(accessToken: string): Promise<{ user: UserModel; token: string }> {
-    try {
-      const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      if (!res.ok) {
-        throw new AppError(ErrorCode.AUTH_GOOGLE_FAILED, 'Invalid Google access token', 401)
-      }
-      const profile = (await res.json()) as {
-        id: string
-        email: string
-        name: string
-        picture?: string
-      }
-
-      const username = buildUsername(profile.email.split('@')[0])
-
-      const { isNewUser, ...user } = await prisma.$transaction(async (tx) => {
-        const upserted = await tx.user.upsert({
-          where: { googleId: profile.id },
-          update: { displayName: profile.name, avatarUrl: profile.picture ?? null, deletedAt: null },
-          create: { googleId: profile.id, email: profile.email, username, displayName: profile.name, avatarUrl: profile.picture ?? null },
-          select: { id: true, username: true, email: true, displayName: true, avatarUrl: true, bio: true, createdAt: true, updatedAt: true },
-        })
-
-        const isNewUser = upserted.createdAt.getTime() === upserted.updatedAt.getTime()
-        const { updatedAt: _discarded, ...userModel } = upserted
-        return { isNewUser, ...userModel }
-      })
-
-      await auditLogService.log({
-        userId: user.id,
-        action: isNewUser ? AuditAction.AUTH_REGISTER : AuditAction.AUTH_LOGIN,
-        entity: 'users',
-        entityId: user.id,
-        metadata: isNewUser ? { googleId: profile.id, email: profile.email } : { googleId: profile.id },
-      })
-
-      const token = this.generateJwt(user.id)
-      return { user, token }
-    } catch (err) {
-      if (err instanceof AppError) throw err
-      logger.error('authService.exchangeGoogleToken failed', { error: err })
-      throw new AppError(ErrorCode.AUTH_GOOGLE_FAILED, 'Authentication failed', 500)
-    }
-  },
-
   async updateMe(
     userId: string,
     dto: { username?: string; displayName?: string; bio?: string },

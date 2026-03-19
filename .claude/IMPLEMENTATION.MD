@@ -932,56 +932,9 @@ packages/extension/
 
 ### Auth flow (`lib/auth.ts`)
 
-Use `chrome.identity.launchWebAuthFlow` — this is the correct MV3 approach, not a redirect.
+**Implemented:** user pastes an Inkmark JWT (from the web app after Google OAuth). `signInWithToken` stores the token, calls `GET /api/v1/auth/me` to validate, clears URL-keyed clip/highlight caches (so account switches cannot reuse another user’s cache), and stores `userId` + username.
 
-```typescript
-// Launches Google OAuth inside a Chrome popup window
-async function signInWithGoogle(): Promise<string> {
-  const clientId = GOOGLE_CLIENT_ID
-  const redirectUri = chrome.identity.getRedirectURL()  // e.g. https://<ext-id>.chromiumapp.org/
-  const nonce = crypto.randomUUID()
-
-  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-  authUrl.searchParams.set('client_id', clientId)
-  authUrl.searchParams.set('redirect_uri', redirectUri)
-  authUrl.searchParams.set('response_type', 'token id_token')
-  authUrl.searchParams.set('scope', 'openid email profile')
-  authUrl.searchParams.set('nonce', nonce)
-
-  const responseUrl = await chrome.identity.launchWebAuthFlow({
-    url: authUrl.toString(),
-    interactive: true,
-  })
-
-  // Parse access_token from responseUrl hash fragment
-  const params = new URLSearchParams(new URL(responseUrl).hash.slice(1))
-  const accessToken = params.get('access_token')
-
-  // Exchange access token for Inkmark JWT via POST /auth/google/token
-  const { token } = await apiClient.exchangeGoogleToken(accessToken)
-
-  // Store JWT in chrome.storage.local (never sessionStorage/localStorage)
-  await chrome.storage.local.set({ inkmark_token: token })
-  return token
-}
-
-async function getStoredToken(): Promise<string | null> {
-  const result = await chrome.storage.local.get('inkmark_token')
-  return result.inkmark_token ?? null
-}
-
-async function signOut(): Promise<void> {
-  await chrome.storage.local.remove('inkmark_token')
-}
-```
-
-**New API endpoint needed** (add to `packages/api`):
-```
-POST /api/v1/auth/google/token
-Body: { accessToken: string }  // Google access token from extension
-→ Verifies token with Google, upserts user, returns Inkmark JWT
-```
-This is separate from the OAuth callback flow (which uses a code, not a token). The extension uses the implicit flow and gets an access token directly.
+**Not implemented:** exchanging a raw Google access token for a JWT in the API (`POST /auth/google/token`) — that approach requires strict audience / tokeninfo validation for the extension’s OAuth client; the team deferred Chrome `launchWebAuthFlow` until a vetted design exists.
 
 ---
 
@@ -995,7 +948,6 @@ class InkmarkClient {
   async getClipByUrl(url: string): Promise<ClipModel | null>
   async createHighlight(data: CreateHighlightPayload): Promise<HighlightModel>
   async getHighlightsForUrl(url: string): Promise<HighlightWithUserModel[]>
-  async exchangeGoogleToken(accessToken: string): Promise<{ token: string }>
 }
 
 interface CreateClipPayload {
@@ -1231,11 +1183,12 @@ export default defineConfig({
 ### New API endpoints required (add to `packages/api` before building extension)
 
 ```
-POST /api/v1/auth/google/token         # exchange Google access token for Inkmark JWT
-GET  /api/v1/clips/by-url?url=         # check if URL is clipped, return clipId
+GET /api/v1/highlights/by-url?url=     # highlights for a URL (with user summary)
 ```
 
-Update existing:
+Use existing `GET /api/v1/clips?url=<encoded>` (list filter) for clip-by-URL checks — no separate `/clips/by-url` route.
+
+Update existing (optional / incremental):
 ```
 GET /api/v1/clips/:id/highlights       # add isOwn + user fields to response
 ```
@@ -1244,7 +1197,7 @@ GET /api/v1/clips/:id/highlights       # add isOwn + user fields to response
 
 ### Build order
 
-1. Add the two new API endpoints + update highlights response first
+1. Add `GET /highlights/by-url` + any clip query tweaks first
 2. Scaffold `packages/extension/` with manifest + vite config
 3. `lib/auth.ts` + `lib/api.ts` + `lib/storage.ts`
 4. `background/service-worker.ts`

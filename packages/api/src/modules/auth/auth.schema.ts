@@ -1,9 +1,5 @@
 import { z } from 'zod'
 
-export const GoogleTokenSchema = z.object({
-  accessToken: z.string().min(1),
-})
-
 export const UpdateProfileSchema = z.object({
   username: z
     .string()

@@ -3,7 +3,7 @@ import passport from 'passport'
 import { authController } from './auth.controller'
 import { requireAuth, requireJwt } from '@/middleware/auth'
 import { validate } from '@/middleware/validate'
-import { GoogleTokenSchema, UpdateProfileSchema } from './auth.schema'
+import { UpdateProfileSchema } from './auth.schema'
 import { CreateTokenSchema, TokenIdParamSchema } from './tokens.schema'
 
 const router = Router()
@@ -20,9 +20,6 @@ router.get(
   passport.authenticate('google', { session: false }),
   authController.googleCallback,
 )
-
-// Exchange Google access token for Inkmark JWT (Chrome extension implicit OAuth flow)
-router.post('/google/token', validate(GoogleTokenSchema), authController.googleToken)
 
 // Returns the currently authenticated user
 router.get('/me', requireAuth, authController.getMe)

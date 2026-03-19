@@ -114,7 +114,6 @@
 ## Phase 9 — Chrome Extension
 **Status**: In progress
 **Deliverables**:
-- [x] New API endpoint: `POST /api/v1/auth/google/token` (exchange Google access token for JWT)
 - [x] New API endpoint: `GET /api/v1/highlights/by-url?url=` (highlights across all clips for a URL with user info)
 - [x] Unified `highlightRepository.findMany(filters)` with `clipId`, `url`, `requestingUserId`, `includeUser` filters
 - [x] `HighlightWithUserModel` added to shared types
@@ -177,7 +176,7 @@
 - Phase 7.5: `requireJwt` middleware prevents PATs from managing other PATs — only JWT (Google OAuth) can create/list/revoke tokens.
 - Phase 7.5: Token repositories use generic `findOne(filter)` / `findMany(filter)` instead of per-field finders — reduces method count.
 - Phase 7.5: `isActive` not stored or returned — frontend computes from `revokedAt` and `expiresAt`.
-- Phase 9: Extension uses `chrome.identity.launchWebAuthFlow` (implicit flow) → new `POST /auth/google/token` endpoint exchanges Google access token for Inkmark JWT. Separate from the existing Passport code-exchange callback.
+- Phase 9: Extension auth is manual JWT entry against `GET /auth/me` (no `POST /auth/google/token` — that flow was removed to avoid token-audience pitfalls with Google userinfo-only verification).
 - Phase 9: No `GET /clips/by-url` endpoint — extension reuses existing `GET /clips?url=<encoded>` filter on the list endpoint.
 - Phase 9: `highlightRepository.findManyByClipId` replaced with generic `findMany(filters)` accepting `clipId`, `url`, `requestingUserId`, `includeUser` — single method for all highlight queries.
 - Phase 9: `isOwn` computed client-side by comparing `highlight.userId` to stored user ID — not returned by API.
