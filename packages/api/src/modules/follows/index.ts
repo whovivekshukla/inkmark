@@ -1,0 +1,5 @@
+export { followService } from './follows.service'
+export { followRepository } from './follows.repository'
+export { followController } from './follows.controller'
+export { default as followsRouter } from './follows.router'
+export type { GetFollowsQuery } from './follows.types'

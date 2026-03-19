@@ -7,3 +7,11 @@ export interface UserModel {
   bio: string | null
   createdAt: Date
 }
+
+// Public-facing user info for social contexts (follower lists, feed, etc.)
+export interface UserSummaryModel {
+  id: string
+  username: string
+  displayName: string
+  avatarUrl: string | null
+}

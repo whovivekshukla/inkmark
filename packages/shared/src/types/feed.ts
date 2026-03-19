@@ -1,15 +1,37 @@
-import type { ClipModel } from './clip'
-import type { HighlightModel } from './highlight'
+import type { ClipTagModel } from './clip'
+import type { UserSummaryModel } from './user'
 
-export type FeedItemType = 'clip' | 'highlight'
+export interface FeedClipModel {
+  id: string
+  userId: string
+  url: string
+  domain: string
+  title: string | null
+  description: string | null
+  ogImage: string | null
+  faviconUrl: string | null
+  isPublic: boolean
+  savedAt: Date
+  updatedAt: Date
+  tags?: ClipTagModel[]
+  user: UserSummaryModel
+}
 
-export interface FeedItemModel {
-  type: FeedItemType
-  clip?: ClipModel
-  highlight?: HighlightModel
-  actorId: string
-  actorUsername: string
-  actorDisplayName: string
-  actorAvatarUrl: string | null
-  occurredAt: Date
+export interface FeedHighlightModel {
+  id: string
+  clipId: string
+  userId: string
+  text: string
+  contextBefore: string | null
+  contextAfter: string | null
+  color: string
+  createdAt: Date
+  updatedAt: Date
+  user: UserSummaryModel
+  clip: {
+    id: string
+    url: string
+    title: string | null
+    domain: string
+  }
 }

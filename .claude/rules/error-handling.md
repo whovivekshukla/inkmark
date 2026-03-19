@@ -41,8 +41,18 @@ The handler:
 - Never sends stack traces in responses
 
 ## Try/catch
-Services wrap async methods in try/catch to re-throw as `AppError` with business context.
-Controllers and repositories do NOT need try/catch — the global error handler catches all Prisma errors and unknown errors automatically.
+**Repositories** wrap every method in try/catch and call `handlePrismaError(err)` from `lib/prisma-error.ts`. This converts all known Prisma errors (P2002, P2025, P2003, etc.) into `AppError` before they reach the service layer. Unknown errors are re-thrown as-is.
+
+**Services** wrap async methods in try/catch. Since repositories already convert Prisma errors to `AppError`, the service catch pattern only needs to re-throw `AppError` and convert unknown errors:
+```typescript
+} catch (err) {
+  if (err instanceof AppError) throw err
+  logger.error('...', { ...context, error: err })
+  throw new AppError(ErrorCode.INTERNAL_ERROR, 'Something went wrong', 500)
+}
+```
+
+**Controllers** do NOT need try/catch — they throw and the global handler catches.
 
 ```typescript
 // ✓ service with try/catch

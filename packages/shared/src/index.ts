@@ -1,5 +1,5 @@
 export type { ApiResponse, PaginationMeta, ApiError, PaginationQuery } from './types/api'
-export type { UserModel } from './types/user'
+export type { UserModel, UserSummaryModel } from './types/user'
 export type {
   ClipModel,
   ClipTagModel,
@@ -8,4 +8,4 @@ export type {
 } from './types/clip'
 export { HighlightColor } from './types/highlight'
 export type { HighlightModel, CreateHighlightModel, UpdateHighlightModel } from './types/highlight'
-export type { FeedItemModel, FeedItemType } from './types/feed'
+export type { FeedClipModel, FeedHighlightModel } from './types/feed'

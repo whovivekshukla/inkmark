@@ -1,8 +1,6 @@
 import { UserModel } from '@inkmark/shared'
 import prisma from '@/lib/prisma'
-import { logger } from '@/lib/logger'
-import { AppError } from '@/lib/errors'
-import { ErrorCode } from '@/constants/error-codes'
+import { handlePrismaError } from '@/lib/prisma-error'
 import { CreateUserData, UpdateUserData } from './auth.types'
 
 // Columns returned for every user query — never select *
@@ -24,8 +22,7 @@ export const authRepository = {
         select: USER_SELECT,
       })
     } catch (err) {
-      logger.error('authRepository.findByGoogleId failed', { googleId, error: err })
-      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to find user', 500)
+      throw handlePrismaError(err)
     }
   },
 
@@ -36,8 +33,7 @@ export const authRepository = {
         select: USER_SELECT,
       })
     } catch (err) {
-      logger.error('authRepository.findById failed', { id, error: err })
-      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to find user', 500)
+      throw handlePrismaError(err)
     }
   },
 
@@ -54,9 +50,7 @@ export const authRepository = {
         select: USER_SELECT,
       })
     } catch (err) {
-      if (err instanceof AppError) throw err
-      logger.error('authRepository.createUser failed', { email: data.email, error: err })
-      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to create user', 500)
+      throw handlePrismaError(err)
     }
   },
 
@@ -71,9 +65,7 @@ export const authRepository = {
         select: USER_SELECT,
       })
     } catch (err) {
-      if (err instanceof AppError) throw err
-      logger.error('authRepository.updateUser failed', { id, error: err })
-      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to update user', 500)
+      throw handlePrismaError(err)
     }
   },
 }

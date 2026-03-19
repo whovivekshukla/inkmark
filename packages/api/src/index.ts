@@ -8,6 +8,8 @@ import { logger } from '@/lib/logger'
 import { authRouter } from '@/modules/auth'
 import { clipsRouter } from '@/modules/clips'
 import { highlightsRouter } from '@/modules/highlights'
+import { followsRouter } from '@/modules/follows'
+import { feedRouter } from '@/modules/feed'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -28,6 +30,8 @@ const v1Router = express.Router()
 v1Router.use('/auth', authRouter)
 v1Router.use('/clips', clipsRouter)
 v1Router.use('/highlights', highlightsRouter)
+v1Router.use('/follows', followsRouter)
+v1Router.use('/feed', feedRouter)
 app.use('/api/v1', v1Router)
 
 // Global error handler must be mounted last

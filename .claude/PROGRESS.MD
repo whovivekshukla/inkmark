@@ -1,6 +1,6 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 4 — Highlights
+## Current phase: Phase 5 — Follows + Feed
 ## Status: Complete
 
 ---
@@ -12,7 +12,7 @@
 - [x] Phase 2 — Auth (Google OAuth + JWT)
 - [x] Phase 3 — Clips
 - [x] Phase 4 — Highlights
-- [ ] Phase 5 — Follows + Feed
+- [x] Phase 5 — Follows + Feed
 - [ ] Phase 6 — Users + Search
 - [ ] Phase 7 — Tags
 - [ ] Phase 8 — MCP Server
@@ -64,13 +64,13 @@
 - [x] AuditLog written on every mutation
 
 ## Phase 5 — Follows + Feed
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] Follow/unfollow works with correct conflict handling
-- [ ] Feed returns only public clips from followed users
-- [ ] Feed is paginated
-- [ ] No N+1 on feed query
-- [ ] Partial index migration applied
+- [x] Follow/unfollow works with correct conflict handling
+- [x] Feed returns only public clips from followed users
+- [x] Feed is paginated
+- [x] No N+1 on feed query
+- [x] Partial index migration applied
 
 ## Phase 6 — Users + Search
 **Status**: Not started
@@ -125,6 +125,11 @@
 - Phase 4: `GET /clips/:id/highlights` mounted on clips router (nested resource); POST/PATCH/DELETE on `/highlights` router.
 - Phase 4: Repository methods have no try/catch and no explicit select — follows clips.repository.ts pattern.
 - Phase 4: Updated `.claude/rules/error-handling.md` — repositories no longer require try/catch.
+- Phase 5: `followUser` relies on DB unique PK constraint for duplicate detection (P2002 → 409); `unfollowUser` relies on P2025 for not-found (→ 404). No pre-checks.
+- Phase 5: `UserSummaryModel` added to shared — public user info (no email) for follower lists and feed contexts.
+- Phase 5: `FeedClipModel` and `FeedHighlightModel` added to shared — include nested `user` and `clip` fields for feed responses.
+- Phase 5: Feed query uses `clips_user_public_saved_idx` partial index (migration `20260319130000_add_feed_partial_index`).
+- Phase 5: Feed service calls `followRepository.getFollowingIds` then queries clips/highlights in one batch — no N+1.
 
 ---
 
