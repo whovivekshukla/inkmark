@@ -1,13 +1,20 @@
 {
   "name": "@inkmark/extension",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "echo 'Extension build: placeholder'",
+    "dev": "vite build --watch",
+    "build": "vite build",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'Extension lint: placeholder'"
   },
+  "dependencies": {
+    "@inkmark/shared": "workspace:*"
+  },
   "devDependencies": {
-    "typescript": "*"
+    "@crxjs/vite-plugin": "^2.0.0-beta.28",
+    "@types/chrome": "^0.0.287",
+    "typescript": "*",
+    "vite": "^5.4.0"
   }
 }

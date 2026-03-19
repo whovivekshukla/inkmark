@@ -1,7 +1,7 @@
 import { HighlightModel } from '@inkmark/shared'
 import prisma from '@/lib/prisma'
 import { handlePrismaError } from '@/lib/prisma-error'
-import { CreateHighlightData, UpdateHighlightData } from './highlights.types'
+import { CreateHighlightData, UpdateHighlightData, FindHighlightsFilter, HighlightWithUserRaw } from './highlights.types'
 
 export const highlightRepository = {
   async findById(highlightId: string): Promise<HighlightModel | null> {
@@ -14,10 +14,29 @@ export const highlightRepository = {
     }
   },
 
-  async findManyByClipId(clipId: string): Promise<HighlightModel[]> {
+  async findMany(filters: FindHighlightsFilter): Promise<(HighlightModel | HighlightWithUserRaw)[]> {
     try {
+      const where: Record<string, unknown> = { deletedAt: null }
+
+      if (filters.clipId) {
+        where.clipId = filters.clipId
+      }
+
+      if (filters.url) {
+        where.clip = {
+          url: filters.url,
+          deletedAt: null,
+          ...(filters.requestingUserId
+            ? { OR: [{ userId: filters.requestingUserId }, { isPublic: true }] }
+            : { isPublic: true }),
+        }
+      }
+
       return await prisma.highlight.findMany({
-        where: { clipId, deletedAt: null },
+        where,
+        ...(filters.includeUser
+          ? { include: { user: { select: { username: true, avatarUrl: true } } } }
+          : {}),
         orderBy: { createdAt: 'asc' },
       })
     } catch (err) {

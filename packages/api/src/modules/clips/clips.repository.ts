@@ -53,6 +53,17 @@ export const clipRepository = {
     }
   },
 
+  async findByUserIdAndUrl(userId: string, url: string): Promise<ClipModel | null> {
+    try {
+      return await prisma.clip.findFirst({
+        where: { userId, url, deletedAt: null },
+        include: { tags: { include: { tag: true } } },
+      })
+    } catch (err) {
+      throw handlePrismaError(err)
+    }
+  },
+
   async create(data: CreateClipData): Promise<ClipModel> {
     try {
       const { userId, url, domain, ...rest } = data

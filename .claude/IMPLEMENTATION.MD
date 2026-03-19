@@ -830,3 +830,446 @@ Each MCP tool must define:
 - [ ] Build passes with zero TypeScript errors
 - [ ] Pagination used on all list endpoints
 - [ ] `ApiResponseDTO` envelope on all responses
+
+
+
+# Inkmark Chrome Extension — Implementation Plan
+
+Add this to `.claude/IMPLEMENTATION.md` as **Phase 9 — Chrome Extension**.
+
+---
+
+## Phase 9 — Chrome Extension
+
+### Overview
+Manifest V3 Chrome extension. Pure capture + visual feedback tool — no feed, no settings UI beyond auth.
+Lives in `packages/extension/`.
+
+**Features:**
+- One-click clip current page
+- Select text → save as highlight (auto-clips page if not already clipped)
+- Revisit a clipped page → your highlights restored in yellow, followed users' highlights in blue
+- Extension icon badge indicates if current page is already clipped
+- Google OAuth login inside popup
+
+---
+
+### Folder structure
+
+```
+packages/extension/
+├── manifest.json
+├── popup/
+│   ├── popup.html
+│   ├── popup.ts
+│   └── popup.css
+├── content/
+│   └── content.ts          # injected into every page
+├── background/
+│   └── service-worker.ts   # Manifest V3 service worker
+├── lib/
+│   ├── api.ts              # typed API client (fetch wrapper)
+│   ├── auth.ts             # OAuth helpers + token storage
+│   └── storage.ts          # chrome.storage.local wrappers
+├── types/
+│   └── index.ts
+├── icons/
+│   ├── icon16.png
+│   ├── icon32.png
+│   ├── icon48.png
+│   └── icon128.png
+├── tsconfig.json
+├── package.json
+└── vite.config.ts          # builds popup + content + background as separate bundles
+```
+
+---
+
+### manifest.json
+
+```json
+{
+  "manifest_version": 3,
+  "name": "Inkmark",
+  "version": "0.1.0",
+  "description": "Clip articles and highlight text",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "identity",
+    "contextMenus",
+    "scripting"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "dist/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "oauth2": {
+    "client_id": "YOUR_GOOGLE_CLIENT_ID",
+    "scopes": ["openid", "email", "profile"]
+  }
+}
+```
+
+---
+
+### Auth flow (`lib/auth.ts`)
+
+Use `chrome.identity.launchWebAuthFlow` — this is the correct MV3 approach, not a redirect.
+
+```typescript
+// Launches Google OAuth inside a Chrome popup window
+async function signInWithGoogle(): Promise<string> {
+  const clientId = GOOGLE_CLIENT_ID
+  const redirectUri = chrome.identity.getRedirectURL()  // e.g. https://<ext-id>.chromiumapp.org/
+  const nonce = crypto.randomUUID()
+
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  authUrl.searchParams.set('client_id', clientId)
+  authUrl.searchParams.set('redirect_uri', redirectUri)
+  authUrl.searchParams.set('response_type', 'token id_token')
+  authUrl.searchParams.set('scope', 'openid email profile')
+  authUrl.searchParams.set('nonce', nonce)
+
+  const responseUrl = await chrome.identity.launchWebAuthFlow({
+    url: authUrl.toString(),
+    interactive: true,
+  })
+
+  // Parse access_token from responseUrl hash fragment
+  const params = new URLSearchParams(new URL(responseUrl).hash.slice(1))
+  const accessToken = params.get('access_token')
+
+  // Exchange access token for Inkmark JWT via POST /auth/google/token
+  const { token } = await apiClient.exchangeGoogleToken(accessToken)
+
+  // Store JWT in chrome.storage.local (never sessionStorage/localStorage)
+  await chrome.storage.local.set({ inkmark_token: token })
+  return token
+}
+
+async function getStoredToken(): Promise<string | null> {
+  const result = await chrome.storage.local.get('inkmark_token')
+  return result.inkmark_token ?? null
+}
+
+async function signOut(): Promise<void> {
+  await chrome.storage.local.remove('inkmark_token')
+}
+```
+
+**New API endpoint needed** (add to `packages/api`):
+```
+POST /api/v1/auth/google/token
+Body: { accessToken: string }  // Google access token from extension
+→ Verifies token with Google, upserts user, returns Inkmark JWT
+```
+This is separate from the OAuth callback flow (which uses a code, not a token). The extension uses the implicit flow and gets an access token directly.
+
+---
+
+### `lib/api.ts` — typed API client
+
+```typescript
+class InkmarkClient {
+  constructor(private baseUrl: string, private token: string) {}
+
+  async clipPage(data: CreateClipPayload): Promise<ClipModel>
+  async getClipByUrl(url: string): Promise<ClipModel | null>
+  async createHighlight(data: CreateHighlightPayload): Promise<HighlightModel>
+  async getHighlightsForUrl(url: string): Promise<HighlightWithUserModel[]>
+  async exchangeGoogleToken(accessToken: string): Promise<{ token: string }>
+}
+
+interface CreateClipPayload {
+  url: string
+  title: string
+  description?: string
+  ogImage?: string
+  faviconUrl?: string
+  isPublic: boolean
+}
+
+interface CreateHighlightPayload {
+  clipId: string
+  text: string
+  contextBefore?: string
+  contextAfter?: string
+  color: 'yellow'  // always yellow for own highlights
+}
+
+interface HighlightWithUserModel {
+  id: string
+  text: string
+  contextBefore: string | null
+  contextAfter: string | null
+  color: string
+  isOwn: boolean   // true if highlight.userId === current user
+  user: { username: string; avatarUrl: string | null }
+}
+```
+
+**New API endpoint needed:**
+```
+GET /api/v1/clips/by-url?url=<encoded>
+→ Returns clip + isOwn flag if current user has clipped this URL
+→ 404 if not clipped by anyone the user can see
+```
+
+**Update existing endpoint:**
+```
+GET /api/v1/clips/:id/highlights
+→ Add isOwn: boolean to each highlight in response
+→ Include user summary (username, avatarUrl)
+→ Return highlights from owner + followed users (currently returns all — verify this)
+```
+
+---
+
+### `lib/storage.ts`
+
+Thin wrappers around `chrome.storage.local`:
+
+```typescript
+// Cache highlights per URL to avoid re-fetching on every page load
+async function getCachedHighlights(url: string): Promise<HighlightWithUserModel[] | null>
+async function setCachedHighlights(url: string, highlights: HighlightWithUserModel[]): Promise<void>
+async function clearCachedHighlights(url: string): Promise<void>
+
+// Cache clip status per URL
+async function getCachedClipStatus(url: string): Promise<{ clipped: boolean; clipId?: string } | null>
+async function setCachedClipStatus(url: string, status: { clipped: boolean; clipId?: string }): Promise<void>
+```
+
+Cache TTL: 5 minutes. After 5 minutes, re-fetch from API.
+Store cache entries with a `cachedAt` timestamp and check on read.
+
+---
+
+### `background/service-worker.ts`
+
+Handles:
+1. **Tab updates** — when user navigates to a new URL, check clip status + fetch highlights, send to content script
+2. **Messages from popup** — clip page action
+3. **Messages from content script** — highlight saved, request highlights
+4. **Badge update** — green badge if page is clipped, no badge if not
+
+```typescript
+// On tab update (navigation complete)
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status !== 'complete' || !tab.url) return
+  if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return
+
+  const token = await getStoredToken()
+  if (!token) return  // not logged in, do nothing
+
+  // Check if page is clipped (use cache first)
+  const clipStatus = await checkClipStatus(tab.url, token)
+  updateBadge(tabId, clipStatus.clipped)
+
+  if (clipStatus.clipped) {
+    // Fetch highlights and send to content script
+    const highlights = await getHighlightsForUrl(tab.url, token)
+    chrome.tabs.sendMessage(tabId, {
+      type: 'RESTORE_HIGHLIGHTS',
+      highlights,
+    })
+  }
+})
+
+// Badge: green dot if clipped
+function updateBadge(tabId: number, clipped: boolean) {
+  chrome.action.setBadgeText({ tabId, text: clipped ? '✓' : '' })
+  chrome.action.setBadgeBackgroundColor({ tabId, color: '#16a34a' })
+}
+
+// Message handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'CLIP_PAGE') { ... }
+  if (message.type === 'HIGHLIGHT_SAVED') { ... }
+  if (message.type === 'GET_AUTH_STATUS') { ... }
+})
+```
+
+---
+
+### `content/content.ts`
+
+Injected into every page. Responsibilities:
+1. Listen for `RESTORE_HIGHLIGHTS` message from service worker → apply highlight marks to DOM
+2. Listen for text selection → on mouseup, if text selected, save as highlight → send `HIGHLIGHT_SAVED` to service worker
+3. Apply highlight styles without breaking page layout
+
+```typescript
+// Text selection handler
+document.addEventListener('mouseup', async () => {
+  const selection = window.getSelection()
+  if (!selection || selection.isCollapsed) return
+
+  const text = selection.toString().trim()
+  if (text.length < 3) return  // ignore tiny selections
+
+  // Get surrounding context (50 chars before/after)
+  const range = selection.getRangeAt(0)
+  const contextBefore = getContextBefore(range, 50)
+  const contextAfter = getContextAfter(range, 50)
+
+  chrome.runtime.sendMessage({
+    type: 'SAVE_HIGHLIGHT',
+    payload: { text, contextBefore, contextAfter }
+  })
+})
+
+// Restore highlights on page
+function restoreHighlights(highlights: HighlightWithUserModel[]) {
+  for (const highlight of highlights) {
+    const color = highlight.isOwn ? 'rgba(250, 204, 21, 0.4)' : 'rgba(96, 165, 250, 0.4)'
+    markTextOnPage(highlight.text, color, highlight.id)
+  }
+}
+
+// Find text in DOM and wrap in <mark> element
+// Use TreeWalker to traverse text nodes — never use innerHTML manipulation
+function markTextOnPage(text: string, color: string, highlightId: string) {
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null
+  )
+
+  // Walk text nodes, find match, wrap with <mark>
+  // Handle edge case: text spans multiple DOM nodes (use Range API)
+}
+```
+
+**Highlight mark styles** (injected via content script):
+```css
+.inkmark-highlight {
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+}
+.inkmark-highlight-own {
+  background-color: rgba(250, 204, 21, 0.4);  /* yellow */
+}
+.inkmark-highlight-other {
+  background-color: rgba(96, 165, 250, 0.4);  /* blue */
+}
+```
+
+---
+
+### `popup/popup.html` + `popup.ts`
+
+Minimal. Three states:
+
+**State 1 — Not logged in:**
+```
+[Inkmark logo]
+[Sign in with Google button]
+```
+
+**State 2 — Logged in, page not clipped:**
+```
+[Inkmark logo]
+[Clip this page button]  ← primary action
+```
+
+**State 3 — Logged in, page already clipped:**
+```
+[Inkmark logo]
+[✓ Clipped]  ← disabled/success state
+[X highlights on this page]
+```
+
+No navigation, no feed, no settings — just this. Keep popup.html under 50 lines.
+
+---
+
+### Build setup (`vite.config.ts`)
+
+Vite with `@crxjs/vite-plugin` — handles MV3 service worker bundling correctly:
+
+```typescript
+import { defineConfig } from 'vite'
+import { crx } from '@crxjs/vite-plugin'
+import manifest from './manifest.json'
+
+export default defineConfig({
+  plugins: [crx({ manifest })],
+  build: {
+    rollupOptions: {
+      input: {
+        popup: 'popup/popup.html',
+      }
+    }
+  }
+})
+```
+
+`@crxjs/vite-plugin` automatically handles content script + service worker bundling from manifest.json entries.
+
+---
+
+### New API endpoints required (add to `packages/api` before building extension)
+
+```
+POST /api/v1/auth/google/token         # exchange Google access token for Inkmark JWT
+GET  /api/v1/clips/by-url?url=         # check if URL is clipped, return clipId
+```
+
+Update existing:
+```
+GET /api/v1/clips/:id/highlights       # add isOwn + user fields to response
+```
+
+---
+
+### Build order
+
+1. Add the two new API endpoints + update highlights response first
+2. Scaffold `packages/extension/` with manifest + vite config
+3. `lib/auth.ts` + `lib/api.ts` + `lib/storage.ts`
+4. `background/service-worker.ts`
+5. `content/content.ts` — highlight restoration + selection saving
+6. `popup/` — three states
+7. Load unpacked in Chrome → test end to end
+
+---
+
+### Deliverables
+- [ ] Extension loads in Chrome without errors
+- [ ] Google OAuth login works from popup
+- [ ] Clicking "Clip this page" creates a clip via API
+- [ ] Selecting text on any page saves a highlight
+- [ ] Badge turns green on clipped pages
+- [ ] Revisiting a clipped page restores own highlights (yellow) and followed users' highlights (blue)
+- [ ] Popup shows correct state (not clipped / clipped + highlight count)
+- [ ] Auth token stored in `chrome.storage.local`, never localStorage
+- [ ] Cache prevents redundant API calls on every navigation
+
+---
+
+### Key constraints to follow
+- Never use `localStorage` or `sessionStorage` — always `chrome.storage.local`
+- Never use `innerHTML` for DOM manipulation — use DOM APIs or Range API
+- Content script must not break page layout on any site
+- Service worker has no DOM access — all DOM work happens in content script
+- MV3 service workers are ephemeral — never store state in module-level variables, always use `chrome.storage`

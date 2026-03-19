@@ -17,3 +17,7 @@ export const UpdateHighlightSchema = z.object({
 export const HighlightIdParamSchema = z.object({
   id: z.string().min(1),
 })
+
+export const HighlightsByUrlQuerySchema = z.object({
+  url: z.string().url(),
+})

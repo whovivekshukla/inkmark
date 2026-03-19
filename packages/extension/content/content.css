@@ -1,0 +1,13 @@
+.inkmark-highlight {
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+}
+
+.inkmark-highlight-own {
+  background-color: rgba(250, 204, 21, 0.4);
+}
+
+.inkmark-highlight-other {
+  background-color: rgba(96, 165, 250, 0.4);
+}

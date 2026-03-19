@@ -17,6 +17,14 @@ export interface HighlightModel {
   updatedAt: Date
 }
 
+// Highlight with user summary — returned by GET /highlights/by-url
+export interface HighlightWithUserModel extends HighlightModel {
+  user: {
+    username: string
+    avatarUrl: string | null
+  }
+}
+
 export interface CreateHighlightModel {
   clipId: string
   text: string

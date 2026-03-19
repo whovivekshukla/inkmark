@@ -19,6 +19,7 @@ export const UpdateClipSchema = z.object({
 export const GetClipsQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
+  url: z.string().url().optional(),
   tag: z.string().optional(),
   domain: z.string().optional(),
   from: z.coerce.date().optional(),

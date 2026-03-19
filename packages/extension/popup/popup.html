@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkmark</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <div class="logo">Inkmark</div>
+
+    <!-- State 1: Not logged in -->
+    <div id="state-login" class="state hidden">
+      <input id="token-input" type="password" placeholder="Paste JWT token" class="input">
+      <button id="btn-login" class="btn btn-primary">Sign in</button>
+    </div>
+
+    <!-- State 2: Logged in, page not clipped -->
+    <div id="state-unclipped" class="state hidden">
+      <button id="btn-clip" class="btn btn-primary">Clip this page</button>
+      <button id="btn-logout" class="btn btn-secondary">Sign out</button>
+    </div>
+
+    <!-- State 3: Logged in, page already clipped -->
+    <div id="state-clipped" class="state hidden">
+      <div class="clipped-badge">Clipped</div>
+      <p id="highlight-count" class="meta"></p>
+      <button id="btn-unclip" class="btn btn-danger">Remove clip</button>
+      <button id="btn-logout-2" class="btn btn-secondary">Sign out</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="state-loading" class="state">
+      <p class="meta">Loading...</p>
+    </div>
+  </div>
+
+  <script src="../dist/popup/popup.js" type="module"></script>
+</body>
+</html>

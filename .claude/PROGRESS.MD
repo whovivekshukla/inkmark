@@ -1,6 +1,6 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 8 — MCP Server
+## Current phase: Phase 9 — Chrome Extension
 ## Status: In progress
 
 ---
@@ -16,7 +16,8 @@
 - [x] Phase 6 — Users + Search
 - [x] Phase 7 — Tags
 - [x] Phase 7.5 — Personal Access Tokens (unplanned)
-- [ ] Phase 8 — MCP Server
+- [x] Phase 8 — MCP Server
+- [ ] Phase 9 — Chrome Extension
 
 ---
 
@@ -103,12 +104,34 @@
 - [x] AuditLog on create and revoke
 
 ## Phase 8 — MCP Server
-**Status**: In progress
+**Status**: Complete
 **Deliverables**:
 - [x] MCP server code with tools (get_clips, get_highlights, search_clips)
 - [x] API client calls REST API with Bearer token auth
-- [ ] End-to-end test: create PAT → configure MCP → verify tools work
-- [ ] All tools handle API errors gracefully
+- [x] End-to-end test: create PAT → configure MCP → verify tools work
+- [x] All tools handle API errors gracefully
+
+## Phase 9 — Chrome Extension
+**Status**: In progress
+**Deliverables**:
+- [x] New API endpoint: `POST /api/v1/auth/google/token` (exchange Google access token for JWT)
+- [x] New API endpoint: `GET /api/v1/highlights/by-url?url=` (highlights across all clips for a URL with user info)
+- [x] Unified `highlightRepository.findMany(filters)` with `clipId`, `url`, `requestingUserId`, `includeUser` filters
+- [x] `HighlightWithUserModel` added to shared types
+- [x] `url` filter added to `GetClipsQuerySchema` (was missing, caused wrong clip matching)
+- [x] Extension scaffold: manifest.json, vite.config.ts, tsconfig.json, package.json
+- [x] `lib/auth.ts` — manual JWT token entry (Google OAuth deferred to web app phase)
+- [x] `lib/api.ts` — typed API client (clips, highlights, auth, getMe, deleteHighlight)
+- [x] `lib/storage.ts` — `chrome.storage.local` wrappers with 5-min TTL cache
+- [x] `background/service-worker.ts` — tab navigation, badge, message handler, highlight delete
+- [x] `content/content.ts` — floating toolbar UX for new highlights + hover tooltip with delete for existing
+- [x] `popup/` — three states (token input, unclipped, clipped) + sign out
+- [x] Placeholder icons generated
+- [x] `pnpm typecheck` passes across all packages
+- [x] Load unpacked in Chrome and test end-to-end
+- [x] Clip, highlight, delete highlight all working
+- [ ] Replace placeholder icons with real ones
+- [ ] Wire Google OAuth via web app login (deferred)
 
 ---
 
@@ -154,6 +177,13 @@
 - Phase 7.5: `requireJwt` middleware prevents PATs from managing other PATs — only JWT (Google OAuth) can create/list/revoke tokens.
 - Phase 7.5: Token repositories use generic `findOne(filter)` / `findMany(filter)` instead of per-field finders — reduces method count.
 - Phase 7.5: `isActive` not stored or returned — frontend computes from `revokedAt` and `expiresAt`.
+- Phase 9: Extension uses `chrome.identity.launchWebAuthFlow` (implicit flow) → new `POST /auth/google/token` endpoint exchanges Google access token for Inkmark JWT. Separate from the existing Passport code-exchange callback.
+- Phase 9: No `GET /clips/by-url` endpoint — extension reuses existing `GET /clips?url=<encoded>` filter on the list endpoint.
+- Phase 9: `highlightRepository.findManyByClipId` replaced with generic `findMany(filters)` accepting `clipId`, `url`, `requestingUserId`, `includeUser` — single method for all highlight queries.
+- Phase 9: `isOwn` computed client-side by comparing `highlight.userId` to stored user ID — not returned by API.
+- Phase 9: Extension uses Vite with manual rollup inputs (not `@crxjs/vite-plugin`) for popup/content/background entry points.
+- Phase 9: Highlight cache + clip status cache use 5-minute TTL in `chrome.storage.local` — avoids redundant API calls on navigation.
+- Phase 9: Content script auto-clips the page if a user selects text on an unclipped page — seamless highlight-first workflow.
 
 ---
 

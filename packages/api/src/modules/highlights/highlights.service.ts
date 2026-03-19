@@ -42,20 +42,30 @@ export const highlightService = {
     }
   },
 
-  async getHighlightsByClip(requestingUserId: string, clipId: string): Promise<HighlightModel[]> {
+  async getHighlights(
+    requestingUserId: string,
+    filters: { clipId?: string; url?: string; includeUser?: boolean },
+  ): Promise<HighlightModel[]> {
     try {
-      const clip = await clipRepository.findById(clipId)
-      if (!clip) {
-        throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
-      }
-      if (!clip.isPublic && clip.userId !== requestingUserId) {
-        throw new AppError(ErrorCode.CLIP_NOT_ACCESSIBLE, 'Clip is not accessible', 403)
+      if (filters.clipId) {
+        const clip = await clipRepository.findById(filters.clipId)
+        if (!clip) {
+          throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
+        }
+        if (!clip.isPublic && clip.userId !== requestingUserId) {
+          throw new AppError(ErrorCode.CLIP_NOT_ACCESSIBLE, 'Clip is not accessible', 403)
+        }
       }
 
-      return highlightRepository.findManyByClipId(clipId)
+      return await highlightRepository.findMany({
+        clipId: filters.clipId,
+        url: filters.url,
+        requestingUserId,
+        includeUser: filters.includeUser,
+      })
     } catch (err) {
       if (err instanceof AppError) throw err
-      logger.error('highlightService.getHighlightsByClip failed', { requestingUserId, clipId, error: err })
+      logger.error('highlightService.getHighlights failed', { requestingUserId, filters, error: err })
       throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to fetch highlights', 500)
     }
   },

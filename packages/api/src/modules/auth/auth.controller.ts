@@ -13,6 +13,12 @@ export const authController = {
     res.redirect(`${base}?token=${token}`)
   },
 
+  // POST /api/v1/auth/google/token — exchange Google access token for Inkmark JWT (Chrome extension flow)
+  async googleToken(req: Request, res: Response): Promise<void> {
+    const { user, token } = await authService.exchangeGoogleToken(req.body.accessToken)
+    res.status(200).json({ success: true, data: { user, token } })
+  },
+
   // GET /api/v1/auth/me — protected by requireAuth
   async getMe(req: Request, res: Response): Promise<void> {
     const user = await authService.getMe(req.user!.userId)
