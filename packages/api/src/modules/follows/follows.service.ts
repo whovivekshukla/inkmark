@@ -1,11 +1,10 @@
-import { UserSummaryModel, PaginationMeta } from '@inkmark/shared'
+import { UserSummaryModel, PaginationMeta, PaginationQuery } from '@inkmark/shared'
 import { followRepository } from './follows.repository'
 import { auditLogService } from '@/modules/audit-log'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
 import { AuditAction } from '@/constants/audit-actions'
 import { logger } from '@/lib/logger'
-import { GetFollowsQuery } from './follows.types'
 
 export const followService = {
   async followUser(followerId: string, followingId: string): Promise<void> {
@@ -52,7 +51,7 @@ export const followService = {
 
   async getFollowers(
     userId: string,
-    query: GetFollowsQuery,
+    query: PaginationQuery,
   ): Promise<{ users: UserSummaryModel[]; meta: PaginationMeta }> {
     try {
       const { users, total } = await followRepository.getFollowers(userId, query.page, query.limit)
@@ -74,7 +73,7 @@ export const followService = {
 
   async getFollowing(
     userId: string,
-    query: GetFollowsQuery,
+    query: PaginationQuery,
   ): Promise<{ users: UserSummaryModel[]; meta: PaginationMeta }> {
     try {
       const { users, total } = await followRepository.getFollowing(userId, query.page, query.limit)

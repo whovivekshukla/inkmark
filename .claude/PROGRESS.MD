@@ -1,6 +1,6 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 5 — Follows + Feed
+## Current phase: Phase 6 — Users + Search
 ## Status: Complete
 
 ---
@@ -13,7 +13,7 @@
 - [x] Phase 3 — Clips
 - [x] Phase 4 — Highlights
 - [x] Phase 5 — Follows + Feed
-- [ ] Phase 6 — Users + Search
+- [x] Phase 6 — Users + Search
 - [ ] Phase 7 — Tags
 - [ ] Phase 8 — MCP Server
 
@@ -73,12 +73,12 @@
 - [x] Partial index migration applied
 
 ## Phase 6 — Users + Search
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] Full-text search returns ranked results using `ts_rank`
-- [ ] Raw query has comment explaining why Prisma ORM is bypassed
-- [ ] Public profile 404s correctly for unknown/deleted users
-- [ ] User search works case-insensitively
+- [x] Full-text search returns ranked results using `ts_rank`
+- [x] Raw query has comment explaining why Prisma ORM is bypassed
+- [x] Public profile 404s correctly for unknown/deleted users
+- [x] User search works case-insensitively
 
 ## Phase 7 — Tags
 **Status**: Not started
@@ -130,6 +130,12 @@
 - Phase 5: `FeedClipModel` and `FeedHighlightModel` added to shared — include nested `user` and `clip` fields for feed responses.
 - Phase 5: Feed query uses `clips_user_public_saved_idx` partial index (migration `20260319130000_add_feed_partial_index`).
 - Phase 5: Feed service calls `followRepository.getFollowingIds` then queries clips/highlights in one batch — no N+1.
+- Phase 6: `DateRangeQuery extends PaginationQuery` added to shared — all module query types now extend shared base types instead of duplicating page/limit.
+- Phase 6: `UserProfileModel` added to shared — public user profile (no email) for profile pages.
+- Phase 6: Clip search uses `prisma.$queryRaw` with `Prisma.sql` for conditional date filters — safe from injection.
+- Phase 6: Highlight search uses Prisma `contains + mode: insensitive` (ILIKE) — no tsvector on highlights.
+- Phase 6: `/users/search` route defined before `/:username` in the router to avoid Express route shadowing.
+- Phase 6: `handlePrismaError` used in all new repositories — consistent with established pattern.
 
 ---
 

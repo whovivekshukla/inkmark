@@ -7,8 +7,9 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData {
-  displayName: string
-  avatarUrl: string | null
+  username?: string
+  displayName?: string
+  bio?: string
 }
 
 export interface JwtPayload {

@@ -1,5 +1,5 @@
-export type { ApiResponse, PaginationMeta, ApiError, PaginationQuery } from './types/api'
-export type { UserModel, UserSummaryModel } from './types/user'
+export type { ApiResponse, PaginationMeta, ApiError, PaginationQuery, DateRangeQuery } from './types/api'
+export type { UserModel, UserProfileModel, UserSummaryModel } from './types/user'
 export type {
   ClipModel,
   ClipTagModel,

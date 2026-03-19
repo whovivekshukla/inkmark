@@ -1,3 +1,4 @@
+import 'express-async-errors' // patches Express 4 to forward async errors to the error handler
 import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
@@ -10,6 +11,8 @@ import { clipsRouter } from '@/modules/clips'
 import { highlightsRouter } from '@/modules/highlights'
 import { followsRouter } from '@/modules/follows'
 import { feedRouter } from '@/modules/feed'
+import { usersRouter } from '@/modules/users'
+import { searchRouter } from '@/modules/search'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -32,6 +35,8 @@ v1Router.use('/clips', clipsRouter)
 v1Router.use('/highlights', highlightsRouter)
 v1Router.use('/follows', followsRouter)
 v1Router.use('/feed', feedRouter)
+v1Router.use('/users', usersRouter)
+v1Router.use('/search', searchRouter)
 app.use('/api/v1', v1Router)
 
 // Global error handler must be mounted last

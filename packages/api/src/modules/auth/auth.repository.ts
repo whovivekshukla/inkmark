@@ -58,10 +58,8 @@ export const authRepository = {
     try {
       return await prisma.user.update({
         where: { id },
-        data: {
-          displayName: data.displayName,
-          avatarUrl: data.avatarUrl,
-        },
+        // Only include fields that were provided — undefined keys are stripped by Prisma
+        data,
         select: USER_SELECT,
       })
     } catch (err) {

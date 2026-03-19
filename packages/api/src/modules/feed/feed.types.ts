@@ -1,4 +1,1 @@
-export interface GetFeedQuery {
-  page: number
-  limit: number
-}
+// No module-specific types — uses PaginationQuery from @inkmark/shared directly

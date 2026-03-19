@@ -2,6 +2,8 @@ import { Router } from 'express'
 import passport from 'passport'
 import { authController } from './auth.controller'
 import { requireAuth } from '@/middleware/auth'
+import { validate } from '@/middleware/validate'
+import { UpdateProfileSchema } from './auth.schema'
 
 const router = Router()
 
@@ -20,6 +22,9 @@ router.get(
 
 // Returns the currently authenticated user
 router.get('/me', requireAuth, authController.getMe)
+
+// Updates the authenticated user's profile (username, displayName, bio)
+router.patch('/me', requireAuth, validate(UpdateProfileSchema), authController.updateMe)
 
 // Stateless logout — client drops the token; server has nothing to invalidate
 router.post('/logout', requireAuth, authController.logout)

@@ -27,6 +27,9 @@ export enum ErrorCode {
   FOLLOW_NOT_FOUND = 'FOLLOW_NOT_FOUND',
   CANNOT_FOLLOW_SELF = 'CANNOT_FOLLOW_SELF',
 
+  // Users
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+
   // Tags
   TAG_NOT_FOUND = 'TAG_NOT_FOUND',
 }

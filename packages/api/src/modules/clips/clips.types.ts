@@ -1,3 +1,5 @@
+import { DateRangeQuery } from '@inkmark/shared'
+
 export interface CreateClipModel {
   url: string
   title?: string
@@ -38,12 +40,8 @@ export interface UpdateClipMetadataData {
   faviconUrl?: string | null
 }
 
-export interface GetClipsFilters {
-  page: number
-  limit: number
+export interface GetClipsFilters extends DateRangeQuery {
   url?: string
   tag?: string
   domain?: string
-  from?: Date
-  to?: Date
 }

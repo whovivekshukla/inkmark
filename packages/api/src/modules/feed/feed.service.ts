@@ -1,15 +1,14 @@
-import { FeedClipModel, FeedHighlightModel, PaginationMeta } from '@inkmark/shared'
+import { FeedClipModel, FeedHighlightModel, PaginationMeta, PaginationQuery } from '@inkmark/shared'
 import { feedRepository } from './feed.repository'
 import { followRepository } from '@/modules/follows/follows.repository'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
 import { logger } from '@/lib/logger'
-import { GetFeedQuery } from './feed.types'
 
 export const feedService = {
   async getFeed(
     userId: string,
-    query: GetFeedQuery,
+    query: PaginationQuery,
   ): Promise<{ clips: FeedClipModel[]; meta: PaginationMeta }> {
     try {
       const followingIds = await followRepository.getFollowingIds(userId)
@@ -32,7 +31,7 @@ export const feedService = {
 
   async getFeedHighlights(
     userId: string,
-    query: GetFeedQuery,
+    query: PaginationQuery,
   ): Promise<{ highlights: FeedHighlightModel[]; meta: PaginationMeta }> {
     try {
       const followingIds = await followRepository.getFollowingIds(userId)

@@ -18,3 +18,8 @@ export interface PaginationQuery {
   page: number
   limit: number
 }
+
+export interface DateRangeQuery extends PaginationQuery {
+  from?: Date
+  to?: Date
+}

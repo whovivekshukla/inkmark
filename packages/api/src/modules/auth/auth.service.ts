@@ -89,4 +89,17 @@ export const authService = {
       throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to fetch user', 500)
     }
   },
+
+  async updateMe(
+    userId: string,
+    dto: { username?: string; displayName?: string; bio?: string },
+  ): Promise<UserModel> {
+    try {
+      return await authRepository.updateUser(userId, dto)
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      logger.error('authService.updateMe failed', { userId, error: err })
+      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to update profile', 500)
+    }
+  },
 }

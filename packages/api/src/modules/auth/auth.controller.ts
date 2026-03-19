@@ -18,6 +18,12 @@ export const authController = {
     res.status(200).json({ success: true, data: user })
   },
 
+  // PATCH /api/v1/auth/me — update authenticated user's profile
+  async updateMe(req: Request, res: Response): Promise<void> {
+    const user = await authService.updateMe(req.user!.userId, req.body)
+    res.status(200).json({ success: true, data: user })
+  },
+
   // POST /api/v1/auth/logout — stateless; client is responsible for dropping the token
   logout(_req: Request, res: Response): void {
     res.status(204).send()
