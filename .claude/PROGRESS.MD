@@ -1,15 +1,16 @@
 # Inkmark — Build Progress
 
-## Current phase: Phase 2 — Auth (Google OAuth + JWT)
-## Status: Not started
+## Current phase: Phase 3 — Clips
+## Status: Complete
 
 ---
 
 ## Phases
 
 - [x] Phase 0 — Monorepo Bootstrap
-- [ ] Phase 1 — Prisma Schema + Database Setup
-- [ ] Phase 2 — Auth (Google OAuth + JWT)
+- [x] Phase 1 — Prisma Schema + Database Setup
+- [x] Phase 2 — Auth (Google OAuth + JWT)
+- [x] Phase 3 — Clips
 - [ ] Phase 3 — Clips
 - [ ] Phase 4 — Highlights
 - [ ] Phase 5 — Follows + Feed
@@ -46,14 +47,14 @@
 - [ ] AuditLog row written on every login
 
 ## Phase 3 — Clips
-**Status**: Not started
+**Status**: Complete
 **Deliverables**:
-- [ ] `POST /clips` creates clip, returns immediately, metadata fills async
-- [ ] Duplicate URL for same user returns 409
-- [ ] Soft-deleted clip restored on re-save
-- [ ] Tag add/remove works transactionally
-- [ ] All queries paginated with correct `meta` in response
-- [ ] AuditLog written on every mutation
+- [x] `POST /clips` creates clip and returns immediately
+- [x] Duplicate URL for same user returns existing clip (idempotent)
+- [x] Soft-deleted clip restored on re-save via atomic upsert
+- [x] Tag add/remove works transactionally
+- [x] All queries paginated with correct `meta` in response
+- [x] AuditLog written on every mutation via dedicated auditLog module
 
 ## Phase 4 — Highlights
 **Status**: Not started
@@ -114,6 +115,11 @@
 - Phase 0: Health check mounted at `/health` (outside `/api/v1/`) so load balancers can reach it without auth.
 - Phase 1: `AuditAction` implemented as TypeScript enum (`constants/audit-actions.ts`) not a Postgres enum — avoids `ALTER TYPE` migrations every time a new action is added during active development, and in prod.
 - Phase 1: `searchVector` kept in schema using `Unsupported("tsvector")` — Prisma manages the column in migrations but never reads/writes it; populated exclusively via Postgres trigger on clip insert/update.
+- Phase 3: Duplicate clip save is idempotent — returns existing active clip rather than 409. Soft-deleted clips restored via atomic upsert on `[userId, url]` unique constraint.
+- Phase 3: OG metadata fetching dropped — Chrome extension sends title/description/ogImage/faviconUrl in the POST body directly (already has the page open).
+- Phase 3: `auditLogService` module created — all services call `auditLogService.log()` instead of Prisma directly. Audit log failures are caught and logged, never propagated.
+- Phase 3: Module barrel exports (`index.ts`) added to each module — imports use `@/modules/audit-log` not deep paths.
+- Phase 3: Partial index `clips_user_active_saved_idx ON clips(user_id, saved_at DESC) WHERE deleted_at IS NULL` added for getAll query performance.
 
 ---
 

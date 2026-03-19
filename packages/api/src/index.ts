@@ -5,7 +5,8 @@ import morgan from 'morgan'
 import '@/lib/passport' // registers the Google OAuth strategy
 import { errorHandler } from '@/middleware/error'
 import { logger } from '@/lib/logger'
-import authRouter from '@/modules/auth/auth.router'
+import { authRouter } from '@/modules/auth'
+import { clipsRouter } from '@/modules/clips'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -24,6 +25,7 @@ app.get('/health', (_req, res) => {
 // API v1 router
 const v1Router = express.Router()
 v1Router.use('/auth', authRouter)
+v1Router.use('/clips', clipsRouter)
 app.use('/api/v1', v1Router)
 
 // Global error handler must be mounted last

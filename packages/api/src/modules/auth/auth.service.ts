@@ -8,6 +8,7 @@ import { ErrorCode } from '@/constants/error-codes'
 import { AuditAction } from '@/constants/audit-actions'
 import { logger } from '@/lib/logger'
 import { buildUsername } from '@/lib/utils'
+import { auditLogService } from '@/modules/audit-log'
 import prisma from '@/lib/prisma'
 
 export const authService = {
@@ -23,7 +24,7 @@ export const authService = {
       // check and one fails with a unique constraint violation on create.
       const username = buildUsername(email.split('@')[0])
 
-      const user = await prisma.$transaction(async (tx) => {
+      const { isNewUser, ...user } = await prisma.$transaction(async (tx) => {
         const upserted = await tx.user.upsert({
           where: { googleId },
           // deletedAt: null restores soft-deleted accounts on re-login,
@@ -38,19 +39,17 @@ export const authService = {
         // On an update, updatedAt is bumped, making them diverge.
         const isNewUser = upserted.createdAt.getTime() === upserted.updatedAt.getTime()
 
-        await tx.auditLog.create({
-          data: {
-            userId: upserted.id,
-            action: isNewUser ? AuditAction.AUTH_REGISTER : AuditAction.AUTH_LOGIN,
-            entity: 'users',
-            entityId: upserted.id,
-            metadata: isNewUser ? { googleId, email } : { googleId },
-          },
-        })
-
         // Strip updatedAt — not part of UserDTO
         const { updatedAt: _discarded, ...userDTO } = upserted
-        return userDTO
+        return { isNewUser, ...userDTO }
+      })
+
+      await auditLogService.log({
+        userId: user.id,
+        action: isNewUser ? AuditAction.AUTH_REGISTER : AuditAction.AUTH_LOGIN,
+        entity: 'users',
+        entityId: user.id,
+        metadata: isNewUser ? { googleId, email } : { googleId },
       })
 
       return user

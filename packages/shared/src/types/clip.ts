@@ -14,8 +14,12 @@ export interface ClipDTO {
 }
 
 export interface ClipTagDTO {
-  id: string
-  name: string
+  clipId: string
+  tagId: string
+  tag: {
+    id: string
+    name: string
+  }
 }
 
 export interface CreateClipDTO {

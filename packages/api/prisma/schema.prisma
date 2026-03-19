@@ -59,7 +59,6 @@ model Clip {
   highlights Highlight[]
   tags       ClipTag[]
 
-  @@unique([userId, url]) // prevents duplicate clips per user
   @@index([userId])
   @@index([savedAt])
   @@index([domain])
