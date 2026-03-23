@@ -22,8 +22,15 @@ export const GetClipsQuerySchema = z.object({
   url: z.string().url().optional(),
   tag: z.string().optional(),
   domain: z.string().optional(),
+  q: z.string().optional(),
+  highlighted: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  sort: z.enum(['recent', 'oldest', 'most_highlights']).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+})
+
+export const GetDomainsQuerySchema = z.object({
+  limit: z.coerce.number().min(1).max(20).default(5),
 })
 
 export const AddTagSchema = z.object({

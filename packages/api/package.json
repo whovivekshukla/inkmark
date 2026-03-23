@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "main": "./src/index.ts",
   "scripts": {
+    "predev": "pnpm run generate",
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",

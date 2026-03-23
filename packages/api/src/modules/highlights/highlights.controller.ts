@@ -8,7 +8,10 @@ export const highlightController = {
   },
 
   async getByClip(req: Request, res: Response): Promise<void> {
-    const highlights = await highlightService.getHighlights(req.user!.userId, { clipId: req.params.id })
+    const highlights = await highlightService.getHighlights(req.user!.userId, {
+      clipId: req.params.id,
+      includeUser: true,
+    })
     res.status(200).json({ success: true, data: highlights })
   },
 

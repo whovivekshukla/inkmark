@@ -7,6 +7,7 @@ import {
   CreateClipSchema,
   UpdateClipSchema,
   GetClipsQuerySchema,
+  GetDomainsQuerySchema,
   AddTagSchema,
   ClipIdParamSchema,
   TagIdParamSchema,
@@ -16,6 +17,7 @@ const router = Router()
 
 router.post('/', requireAuth, validate(CreateClipSchema), clipController.create)
 router.get('/', requireAuth, validate(GetClipsQuerySchema, 'query'), clipController.getAll)
+router.get('/domains', requireAuth, validate(GetDomainsQuerySchema, 'query'), clipController.getDomains)
 router.get('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), clipController.getById)
 router.patch('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), validate(UpdateClipSchema), clipController.update)
 router.delete('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), clipController.delete)

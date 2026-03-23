@@ -3,6 +3,9 @@ import type { HighlightForRestore } from '../types'
 // ─── Current user cache ────────────────────────────────────────────────────
 
 let currentUsername = 'you'
+let pageIsClipped = false
+/** Prevents double-restore when GET_PAGE_STATUS and RESTORE_HIGHLIGHTS both deliver the same highlights. */
+let highlightsRestoredNonEmptyThisSession = false
 
 chrome.storage.local.get('inkmark_username', (result) => {
   if (result.inkmark_username) currentUsername = result.inkmark_username
@@ -309,6 +312,7 @@ document.addEventListener('mouseup', (e) => {
 
       const text = selection.toString().trim()
       if (text.length < 3) return
+      if (!pageIsClipped) return
 
       const range = selection.getRangeAt(0).cloneRange()
       showToolbar(range)
@@ -534,6 +538,9 @@ function markTextOnPage(highlight: HighlightForRestore): void {
 }
 
 function restoreHighlights(highlights: HighlightForRestore[]): void {
+  if (highlights.length === 0) return
+  if (highlightsRestoredNonEmptyThisSession) return
+  highlightsRestoredNonEmptyThisSession = true
   for (const h of highlights) {
     markTextOnPage(h)
   }
@@ -570,9 +577,37 @@ function getContext(range: Range, chars: number, direction: 'before' | 'after'):
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'RESTORE_HIGHLIGHTS') {
+    pageIsClipped = true
     restoreHighlights(message.highlights as HighlightForRestore[])
+  }
+
+  if (message.type === 'PAGE_CLIPPED') {
+    pageIsClipped = true
+  }
+
+  if (message.type === 'REMOVE_ALL_HIGHLIGHTS') {
+    pageIsClipped = false
+    highlightsRestoredNonEmptyThisSession = false
+    document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((mark) => {
+      const parent = mark.parentNode
+      if (!parent) return
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark)
+      parent.removeChild(mark)
+    })
+    dismissTooltip()
   }
 })
 
 // Inject styles immediately so toolbar/tooltip/highlights work on any page
 injectStyles()
+
+// Request clip status + highlights from service worker on init
+// (content script may load after onUpdated fires, so we pull instead of relying on push)
+chrome.runtime.sendMessage({ type: 'GET_PAGE_STATUS', url: window.location.href }, (response) => {
+  if (response?.clipped) {
+    pageIsClipped = true
+    if (response.highlights?.length > 0) {
+      restoreHighlights(response.highlights as HighlightForRestore[])
+    }
+  }
+})

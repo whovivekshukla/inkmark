@@ -36,4 +36,10 @@ export const clipController = {
     await clipService.removeTagFromClip(req.user!.userId, req.params.id, req.params.tagId)
     res.status(204).send()
   },
+
+  async getDomains(req: Request, res: Response): Promise<void> {
+    const limit = Number(req.query.limit) || 5
+    const domains = await clipService.getTopDomains(req.user!.userId, limit)
+    res.status(200).json({ success: true, data: domains })
+  },
 }

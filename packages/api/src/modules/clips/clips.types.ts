@@ -40,8 +40,13 @@ export interface UpdateClipMetadataData {
   faviconUrl?: string | null
 }
 
+export type ClipSortKey = 'recent' | 'oldest' | 'most_highlights'
+
 export interface GetClipsFilters extends DateRangeQuery {
   url?: string
   tag?: string
   domain?: string
+  q?: string
+  highlighted?: boolean
+  sort?: ClipSortKey
 }

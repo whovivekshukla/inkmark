@@ -1,4 +1,4 @@
-import { ClipModel, ClipTagModel, PaginationMeta } from '@inkmark/shared'
+import { ClipModel, ClipTagModel, ClipDomainModel, PaginationMeta } from '@inkmark/shared'
 import { clipRepository } from './clips.repository'
 import { CreateClipModel, UpdateClipModel, GetClipsFilters, UpdateClipData } from './clips.types'
 import { auditLogService } from '@/modules/audit-log'
@@ -164,5 +164,15 @@ export const clipService = {
 
     // Outside try/catch — P2025 (tag not on clip) bubbles to global handler → 404
     await clipRepository.removeTag(clipId, tagId)
+  },
+
+  async getTopDomains(userId: string, limit = 5): Promise<ClipDomainModel[]> {
+    try {
+      return await clipRepository.getTopDomains(userId, limit)
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      logger.error('clipService.getTopDomains failed', { userId, error: err })
+      throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to fetch domains', 500)
+    }
   },
 }

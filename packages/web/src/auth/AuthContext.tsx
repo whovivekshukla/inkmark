@@ -24,6 +24,8 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   signOut: () => void
+  /** Re-fetch `/auth/me` with the current stored token. */
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -63,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
           setToken(stored)
           setUser(me)
           if (fromOAuth) {
-            navigate(`/${encodeURIComponent(me.username)}`, { replace: true })
+            navigate('/library', { replace: true })
           }
         }
       } catch {
@@ -90,9 +92,22 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     navigate('/', { replace: true })
   }, [navigate])
 
+  const refreshUser = useCallback(async () => {
+    const stored = getStoredToken()
+    if (!stored) return
+    try {
+      const me = await fetchMe(stored)
+      setUser(me)
+    } catch {
+      clearStoredToken()
+      setToken(null)
+      setUser(null)
+    }
+  }, [])
+
   const value = useMemo(
-    () => ({ user, token, ready, signOut }),
-    [user, token, ready, signOut],
+    () => ({ user, token, ready, signOut, refreshUser }),
+    [user, token, ready, signOut, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

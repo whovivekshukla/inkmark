@@ -4,6 +4,15 @@ import { followRepository } from '@/modules/follows/follows.repository'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
 import { logger } from '@/lib/logger'
+import { MAX_PAGE_SIZE } from '@/constants/pagination'
+
+/** Clamp pagination — route validation should already enforce; this guards direct callers. */
+function clampPagination(q: PaginationQuery): { page: number; limit: number } {
+  const page = Number.isFinite(q.page) && q.page >= 1 ? Math.floor(q.page) : 1
+  const limitRaw = Number.isFinite(q.limit) ? Math.floor(q.limit) : 20
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, limitRaw))
+  return { page, limit }
+}
 
 export const feedService = {
   async getFeed(
@@ -11,15 +20,16 @@ export const feedService = {
     query: PaginationQuery,
   ): Promise<{ clips: FeedClipModel[]; meta: PaginationMeta }> {
     try {
+      const { page, limit } = clampPagination(query)
       const followingIds = await followRepository.getFollowingIds(userId)
-      const { clips, total } = await feedRepository.getClipFeed(followingIds, query.page, query.limit)
+      const { clips, total } = await feedRepository.getClipFeed(userId, followingIds, page, limit)
       return {
         clips,
         meta: {
-          page: query.page,
-          limit: query.limit,
+          page,
+          limit,
           total,
-          hasMore: query.page * query.limit < total,
+          hasMore: page * limit < total,
         },
       }
     } catch (err) {
@@ -34,19 +44,21 @@ export const feedService = {
     query: PaginationQuery,
   ): Promise<{ highlights: FeedHighlightModel[]; meta: PaginationMeta }> {
     try {
+      const { page, limit } = clampPagination(query)
       const followingIds = await followRepository.getFollowingIds(userId)
       const { highlights, total } = await feedRepository.getHighlightFeed(
+        userId,
         followingIds,
-        query.page,
-        query.limit,
+        page,
+        limit,
       )
       return {
         highlights,
         meta: {
-          page: query.page,
-          limit: query.limit,
+          page,
+          limit,
           total,
-          hasMore: query.page * query.limit < total,
+          hasMore: page * limit < total,
         },
       }
     } catch (err) {

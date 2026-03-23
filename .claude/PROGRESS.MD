@@ -183,8 +183,17 @@
 - Phase 9: Extension uses Vite with manual rollup inputs (not `@crxjs/vite-plugin`) for popup/content/background entry points.
 - Phase 9: Highlight cache + clip status cache use 5-minute TTL in `chrome.storage.local` — avoids redundant API calls on navigation.
 - Phase 9: Content script auto-clips the page if a user selects text on an unclipped page — seamless highlight-first workflow.
+- Web UI: Dark theme uses distinct `--bg` vs `--surface` (`--bg-elevated`) for page/card separation; theme follows `data-theme` + toggle (not `prefers-color-scheme`).
+- Feed (2026-03-20): One feed row = one clip from `GET /feed` (clip feed only). Tabs All / Clips / Highlights filter **client-side** on loaded pages — no extra API calls per tab. Clips = `highlightCount === 0`, Highlights = `highlightCount > 0`. Feed API returns `firstHighlight` (earliest by `createdAt`), `authorHighlightCount` / `otherHighlightCount` (batch SQL `COUNT(*) FILTER`) for amber vs blue top border and dark quote panels. Removed merged highlight-feed rows and deleted unused `FeedHighlightCard.tsx`.
+- Clip detail (2026-03-20): `ClipDetailPage` matches two-column spec (`1fr` + `300px`, `gap: 40px`, `max-width: 1100px`, sticky sidebar `top: 72px`). Metadata (favicon/letter + domain, serif title 22px/500, OG description optional), divider, **YOUR HIGHLIGHTS** + own-first cards + **ALSO HIGHLIGHTED BY** + others; empty state; highlight cards with left accent (amber/blue), serif quote body, footer attribution, delete on hover for own (`DELETE /highlights/:id`). Sidebar: **Read original** (`btn--primary`), saved · domain, **Tags** + **+ Add tag** (`POST /clips/:id/tags`), highlights navigator (hidden if none; dot + 60-char preview; scroll-into-view). Back link via `clipBackFromState`. `packages/web/src/api/client.ts`: `deleteHighlight`, `addTagToClip`.
 
 ---
 
 ## Notes
 <!-- Anything the agent should know that doesn't fit elsewhere -->
+
+### 2026-03-20 — Feed page mockup + dark surfaces
+- **`packages/web`**: Feed column `max-width: 580px` (`.page-wide.feed-page`). `FeedClipCard` matches mockup: optional 2px top accent (amber = author-only highlights on clip, blue = any other user’s highlights), lead quote + optional “+N more” pill + `Title — domain` attribution, or minimal domain + sans title when no highlights; footer with clipped time + highlight label/dots.
+- **`packages/api` `feed.repository.ts`**: First highlight `take: 1` `orderBy createdAt asc`; per-page batch `COUNT(*) FILTER` for author vs other highlights; removed author-only `highlightPreviews` slice from feed model.
+- **`packages/shared` `FeedClipModel`**: Added `FeedFirstHighlightModel`, `authorHighlightCount`, `otherHighlightCount`; removed feed-only `highlightPreviews` (kept `FeedHighlightPreviewModel` for optional grid cards).
+- **`packages/web/src/styles.css`**: Dark `--hl-*` lines at 0.55 opacity, blue wash 0.08; quote `font-size: 15px`, `line-height: 1.65`, 4-line clamp; dark quote panels use `--own` / `--other` modifier classes on `.feed-clip-card__quote-panel`.

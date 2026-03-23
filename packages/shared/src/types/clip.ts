@@ -10,6 +10,8 @@ export interface ClipModel {
   isPublic: boolean
   savedAt: Date
   updatedAt: Date
+  /** Present on list responses when the server includes counts. */
+  highlightCount?: number
   tags?: ClipTagModel[]
 }
 
@@ -20,6 +22,11 @@ export interface ClipTagModel {
     id: string
     name: string
   }
+}
+
+export interface ClipDomainModel {
+  domain: string
+  count: number
 }
 
 export interface CreateClipModel {

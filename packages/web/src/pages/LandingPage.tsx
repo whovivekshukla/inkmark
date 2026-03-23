@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 const features = [
   {
     title: 'Clip articles',
-    body: 'Save articles and pages in one place—always tied to the source, never lost in a tab pile.',
+    body: 'Save articles and pages in one place, always tied to the source, never lost in a tab pile.',
   },
   {
     title: 'Highlight what matters',
@@ -13,6 +14,10 @@ const features = [
   {
     title: 'Reading, organized',
     body: 'A quieter library for serious readers: less noise, more of the ideas you actually care about.',
+  },
+  {
+    title: 'Your reading data, fully open',
+    body: 'Every clip and highlight is available through a REST API and an MCP server. Pipe your reading into AI tools, personal dashboards, or anything you build.',
   },
 ] as const
 
@@ -26,9 +31,10 @@ export function LandingPage(): React.ReactElement {
           Inkmark
         </Link>
         <nav className="landing-nav-actions" aria-label="Account">
+          <ThemeToggle />
           {user ? (
-            <Link className="btn btn--ghost" to={`/${encodeURIComponent(user.username)}`}>
-              Profile
+            <Link className="btn btn--ghost" to="/library">
+              Library
             </Link>
           ) : (
             <Link className="btn btn--ghost" to="/sign-in">
@@ -46,7 +52,7 @@ export function LandingPage(): React.ReactElement {
             Surface what matters.
           </h1>
           <p className="landing-hero-lede">
-            Inkmark is a minimal home for clips and highlights—built for people who read deeply and want
+            Inkmark is a minimal home for clips and highlights, built for people who read deeply and want
             their shelf to stay legible.
           </p>
           <div className="landing-hero-cta">
@@ -77,7 +83,7 @@ export function LandingPage(): React.ReactElement {
           <div className="landing-bottom-card">
             <p className="landing-bottom-title">Start your shelf</p>
             <p className="landing-bottom-copy muted">
-              Sign in with Google—no new password, no clutter.
+              Sign in with Google. No new password, no clutter.
             </p>
             <Link className="btn btn--primary" to="/sign-in">
               Continue to Inkmark

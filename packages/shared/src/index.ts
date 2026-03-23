@@ -3,11 +3,17 @@ export type { UserModel, UserProfileModel, UserSummaryModel } from './types/user
 export type {
   ClipModel,
   ClipTagModel,
+  ClipDomainModel,
   CreateClipModel,
   UpdateClipModel,
 } from './types/clip'
 export { HighlightColor } from './types/highlight'
 export type { HighlightModel, HighlightWithUserModel, CreateHighlightModel, UpdateHighlightModel } from './types/highlight'
-export type { FeedClipModel, FeedHighlightModel } from './types/feed'
+export type {
+  FeedClipModel,
+  FeedFirstHighlightModel,
+  FeedHighlightModel,
+  FeedHighlightPreviewModel,
+} from './types/feed'
 export type { TagModel, TagWithCountModel } from './types/tag'
 export type { PersonalAccessTokenModel, PersonalAccessTokenCreatedModel } from './types/token'

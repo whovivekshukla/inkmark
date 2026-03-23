@@ -48,6 +48,9 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     updateBadge(tabId, clipStatus.clipped)
 
     if (clipStatus.clipped) {
+      // Notify content script that this page is clipped (enables highlight toolbar)
+      chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
+
       // Fetch highlights (cache first)
       let highlights = await getCachedHighlights<HighlightWithUserModel>(tab.url)
       if (!highlights) {
@@ -75,6 +78,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ authenticated: token !== null })
     })
     return true // async response
+  }
+
+  if (message.type === 'GET_PAGE_STATUS') {
+    const url = message.url as string
+    getToken().then(async (token) => {
+      if (!token) {
+        sendResponse({ clipped: false })
+        return
+      }
+      try {
+        const userId = await getUserId()
+        let clipStatus = await getCachedClipStatus(url)
+        if (!clipStatus) {
+          clipStatus = await getClipByUrl(url, token)
+          await setCachedClipStatus(url, clipStatus)
+        }
+        if (!clipStatus.clipped || !userId) {
+          sendResponse({ clipped: false })
+          return
+        }
+        let highlights = await getCachedHighlights<HighlightWithUserModel>(url)
+        if (!highlights) {
+          highlights = await getHighlightsForUrl(url, token)
+          await setCachedHighlights(url, highlights)
+        }
+        sendResponse({
+          clipped: true,
+          highlights: toRestorePayload(highlights, userId),
+        })
+      } catch {
+        sendResponse({ clipped: false })
+      }
+    })
+    return true
   }
 
   if (message.type === 'GET_CLIP_STATUS') {
@@ -114,9 +151,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const clip = await clipPage(token, payload)
         await setCachedClipStatus(payload.url, { clipped: true, clipId: clip.id })
-        // Update badge on the sender tab
-        if (sender.tab?.id) {
-          updateBadge(sender.tab.id, true)
+        // Update badge and notify content script on the active tab
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        if (tab?.id) {
+          updateBadge(tab.id, true)
+          chrome.tabs.sendMessage(tab.id, { type: 'PAGE_CLIPPED' })
         }
         sendResponse({ success: true, clipId: clip.id })
       } catch (err) {
@@ -144,21 +183,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return
       }
       try {
-        // Get or create clip for this URL
+        // Page must already be clipped — content script gates toolbar on pageIsClipped
         let clipStatus = await getCachedClipStatus(tabUrl)
-        if (!clipStatus || !clipStatus.clipped) {
+        if (!clipStatus?.clipId) {
+          // Cache miss or expired — re-check API
           clipStatus = await getClipByUrl(tabUrl, token)
+          if (clipStatus.clipped) await setCachedClipStatus(tabUrl, clipStatus)
         }
-
-        let clipId = clipStatus.clipId
+        const clipId = clipStatus?.clipId
         if (!clipId) {
-          // Auto-clip the page
-          const clip = await clipPage(token, { url: tabUrl, title: sender.tab?.title })
-          clipId = clip.id
-          await setCachedClipStatus(tabUrl, { clipped: true, clipId })
-          if (sender.tab?.id) {
-            updateBadge(sender.tab.id, true)
-          }
+          sendResponse({ success: false, error: 'Page not clipped' })
+          return
         }
 
         const highlight = await createHighlight(token, { clipId, ...payload })
@@ -211,6 +246,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await deleteClip(clipStatus.clipId, token)
         await clearCachedClipStatus(url)
         await clearCachedHighlights(url)
+
+        // Tell content script to strip all highlight marks from the page
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        if (tab?.id) {
+          updateBadge(tab.id, false)
+          chrome.tabs.sendMessage(tab.id, { type: 'REMOVE_ALL_HIGHLIGHTS' })
+        }
+
         sendResponse({ success: true })
       } catch (err) {
         sendResponse({ success: false, error: err instanceof Error ? err.message : 'Failed to delete clip' })
