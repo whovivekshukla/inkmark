@@ -1,0 +1,40 @@
+services:
+  api:
+    # For prod (VPS): use image from GHCR
+    # For local dev: uncomment build: and comment image:
+    image: ghcr.io/whovivekshukla/inkmark-api:latest
+    # build:
+    #   context: .
+    #   dockerfile: packages/api/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      INFISICAL_TOKEN: ${INFISICAL_TOKEN}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
+      INFISICAL_ENV: ${INFISICAL_ENV:-dev}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  web:
+    # For prod (VPS): use image from GHCR
+    # For local dev: uncomment build: and comment image:
+    image: ghcr.io/whovivekshukla/inkmark-web:latest
+    # build:
+    #   context: .
+    #   dockerfile: packages/web/Dockerfile
+    #   args:
+    #     VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api/v1}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
