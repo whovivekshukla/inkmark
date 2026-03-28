@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { ClipModel, HighlightModel } from '@inkmark/shared'
 import { InkmarkApiClient } from './lib/api-client.js'
 
-const BASE_URL = process.env.INKMARK_API_URL ?? 'http://localhost:3000'
+const BASE_URL = process.env.INKMARK_API_URL ?? 'https://inkmark.flaplabs.xyz'
 const TOKEN = process.env.INKMARK_API_TOKEN
 
 if (!TOKEN) {
