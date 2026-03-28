@@ -1,4 +1,15 @@
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./packages/nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+
   api:
     # For prod (VPS): use image from GHCR
     # For local dev: uncomment build: and comment image:
@@ -6,8 +17,8 @@ services:
     # build:
     #   context: .
     #   dockerfile: packages/api/Dockerfile
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"  # exposed via nginx reverse proxy
     environment:
       INFISICAL_TOKEN: ${INFISICAL_TOKEN}
       INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID}
@@ -28,8 +39,8 @@ services:
     #   dockerfile: packages/web/Dockerfile
     #   args:
     #     VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api/v1}
-    ports:
-      - "80:5173"
+    # ports:
+    #   - "5173:5173"  # exposed via nginx reverse proxy
     depends_on:
       - api
     restart: unless-stopped
