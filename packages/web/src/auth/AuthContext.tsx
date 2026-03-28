@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
       if (urlToken) {
         setStoredToken(urlToken)
         window.history.replaceState({}, '', `${window.location.pathname}`)
+        window.dispatchEvent(new CustomEvent('inkmark:auth', { detail: { token: urlToken } }))
       }
 
       const stored = getStoredToken()

@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         'background/service-worker': resolve(__dirname, 'background/service-worker.ts'),
         'content/content': resolve(__dirname, 'content/content.ts'),
+        'content/auth-bridge': resolve(__dirname, 'content/auth-bridge.ts'),
         'popup/popup': resolve(__dirname, 'popup/popup.ts'),
       },
       output: {

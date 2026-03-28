@@ -1,6 +1,6 @@
 import type { ClipModel, HighlightWithUserModel } from '@inkmark/shared'
 
-const API_BASE = 'http://localhost:3000'
+const API_BASE = 'https://inkmark.flaplabs.xyz'
 
 interface ApiSuccessResponse<T> {
   success: true

@@ -19,6 +19,11 @@
       "js": ["dist/content/content.js"],
       "css": ["dist/content/content.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://inkmark.flaplabs.xyz/*"],
+      "js": ["dist/content/auth-bridge.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {

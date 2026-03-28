@@ -1,11 +1,10 @@
-import { signInWithToken, signOut } from '../lib/auth'
+import { signOut } from '../lib/auth'
 import type { ClipStatusResponse } from '../types'
 
 const stateLogin = document.getElementById('state-login')!
 const stateUnclipped = document.getElementById('state-unclipped')!
 const stateClipped = document.getElementById('state-clipped')!
 const stateLoading = document.getElementById('state-loading')!
-const tokenInput = document.getElementById('token-input') as HTMLInputElement
 const btnLogin = document.getElementById('btn-login')!
 const btnClip = document.getElementById('btn-clip')!
 const btnLogout = document.getElementById('btn-logout')!
@@ -61,32 +60,30 @@ async function init(): Promise<void> {
   if (clipStatus.clipped) {
     showState('clipped')
     highlightCount.textContent = 'Select text on this page to highlight it'
+    return
+  }
+
+  // Auto-clip the page
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const response = await chrome.runtime.sendMessage({
+    type: 'CLIP_PAGE',
+    payload: { url: tab.url, title: tab.title },
+  })
+
+  if (response?.success) {
+    showState('clipped')
+    highlightCount.textContent = 'Select text on this page to highlight it'
   } else {
+    // Fall back to manual clip on failure
     showState('unclipped')
   }
 }
 
 // ─── Event listeners ───────────────────────────────────────────────────────
 
-btnLogin.addEventListener('click', async () => {
-  const jwt = tokenInput.value.trim()
-  if (!jwt) return
-
-  btnLogin.setAttribute('disabled', 'true')
-  btnLogin.textContent = 'Signing in...'
-  try {
-    await signInWithToken(jwt)
-    await init()
-  } catch {
-    btnLogin.removeAttribute('disabled')
-    btnLogin.textContent = 'Sign in'
-    tokenInput.value = ''
-    tokenInput.placeholder = 'Invalid token — try again'
-  }
-})
-
-tokenInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') btnLogin.click()
+btnLogin.addEventListener('click', () => {
+  chrome.tabs.create({ url: 'https://inkmark.flaplabs.xyz/sign-in' })
+  window.close()
 })
 
 async function handleLogout(): Promise<void> {

@@ -1,5 +1,6 @@
 import { getToken, getUserId, getCachedClipStatus, setCachedClipStatus, clearCachedClipStatus, getCachedHighlights, setCachedHighlights, clearCachedHighlights } from '../lib/storage'
 import { getClipByUrl, getHighlightsForUrl, clipPage, createHighlight, deleteHighlight, deleteClip } from '../lib/api'
+import { signInWithToken } from '../lib/auth'
 import type { HighlightWithUserModel } from '@inkmark/shared'
 import type { HighlightForRestore } from '../types'
 
@@ -259,6 +260,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error: err instanceof Error ? err.message : 'Failed to delete clip' })
       }
     })
+    return true
+  }
+
+  if (message.type === 'SET_TOKEN') {
+    const token = message.token as string
+    signInWithToken(token)
+      .then(() => sendResponse({ success: true }))
+      .catch(() => sendResponse({ success: false }))
     return true
   }
 
