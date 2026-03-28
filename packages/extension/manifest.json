@@ -23,7 +23,7 @@
     {
       "matches": ["https://inkmark.flaplabs.xyz/*"],
       "js": ["dist/content/auth-bridge.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
   "action": {
