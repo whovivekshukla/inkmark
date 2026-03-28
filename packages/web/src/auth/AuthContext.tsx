@@ -90,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
     clearStoredToken()
     setToken(null)
     setUser(null)
+    window.dispatchEvent(new CustomEvent('inkmark:signout'))
     navigate('/', { replace: true })
   }, [navigate])
 

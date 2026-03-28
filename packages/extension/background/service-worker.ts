@@ -1,6 +1,6 @@
 import { getToken, getUserId, getCachedClipStatus, setCachedClipStatus, clearCachedClipStatus, getCachedHighlights, setCachedHighlights, clearCachedHighlights } from '../lib/storage'
 import { getClipByUrl, getHighlightsForUrl, clipPage, createHighlight, deleteHighlight, deleteClip } from '../lib/api'
-import { signInWithToken } from '../lib/auth'
+import { signInWithToken, signOut } from '../lib/auth'
 import type { HighlightWithUserModel } from '@inkmark/shared'
 import type { HighlightForRestore } from '../types'
 
@@ -266,6 +266,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SET_TOKEN') {
     const token = message.token as string
     signInWithToken(token)
+      .then(() => sendResponse({ success: true }))
+      .catch(() => sendResponse({ success: false }))
+    return true
+  }
+
+  if (message.type === 'CLEAR_TOKEN') {
+    signOut()
       .then(() => sendResponse({ success: true }))
       .catch(() => sendResponse({ success: false }))
     return true
