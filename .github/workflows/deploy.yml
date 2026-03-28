@@ -111,6 +111,11 @@ jobs:
           script: |
             cd /root/inkmark
 
+            # Export secrets for docker-compose
+            export INFISICAL_TOKEN=${{ secrets.INFISICAL_TOKEN }}
+            export INFISICAL_PROJECT_ID=${{ secrets.INFISICAL_PROJECT_ID }}
+            export INFISICAL_ENV=prod
+
             # Log in to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
@@ -118,12 +123,7 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}-api:latest
             docker pull ghcr.io/${{ github.repository }}-web:latest
 
-            # Update docker-compose.yml to use GHCR images
-            # (assumes you update this manually or use a config file)
-
             # Restart containers
-            INFISICAL_TOKEN=${{ secrets.INFISICAL_TOKEN }} \
-            INFISICAL_PROJECT_ID=${{ secrets.INFISICAL_PROJECT_ID }} \
             docker compose pull && docker compose up -d
 
             # Clean up
