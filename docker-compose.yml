@@ -29,7 +29,7 @@ services:
     #   args:
     #     VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api/v1}
     ports:
-      - "5173:5173"
+      - "80:5173"
     depends_on:
       - api
     restart: unless-stopped
