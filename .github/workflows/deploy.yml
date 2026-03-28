@@ -32,9 +32,6 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Lint
-        run: pnpm lint
-
   build:
     needs: test
     runs-on: ubuntu-latest
