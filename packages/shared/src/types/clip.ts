@@ -24,11 +24,6 @@ export interface ClipTagModel {
   }
 }
 
-export interface ClipDomainModel {
-  domain: string
-  count: number
-}
-
 export interface CreateClipModel {
   url: string
   isPublic?: boolean

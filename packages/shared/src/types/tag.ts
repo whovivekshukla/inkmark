@@ -6,4 +6,5 @@ export interface TagModel {
 
 export interface TagWithCountModel extends TagModel {
   _count: { clips: number }
+  highlightCount: number
 }

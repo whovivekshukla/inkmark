@@ -3,7 +3,6 @@ export type { UserModel, UserProfileModel, UserSummaryModel } from './types/user
 export type {
   ClipModel,
   ClipTagModel,
-  ClipDomainModel,
   CreateClipModel,
   UpdateClipModel,
 } from './types/clip'

@@ -1,5 +1,5 @@
 import { TagModel, TagWithCountModel } from '@inkmark/shared'
-import { tagsRepository } from './tags.repository'
+import { FindTagsOptions, tagsRepository } from './tags.repository'
 import { auditLogService } from '@/modules/audit-log'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
@@ -7,12 +7,12 @@ import { AuditAction } from '@/constants/audit-actions'
 import { logger } from '@/lib/logger'
 
 export const tagsService = {
-  async getTags(userId: string): Promise<TagWithCountModel[]> {
+  async getTags(userId: string, options: FindTagsOptions = {}): Promise<TagWithCountModel[]> {
     try {
-      return await tagsRepository.findManyByUserId(userId)
+      return await tagsRepository.findManyByUserId(userId, options)
     } catch (err) {
       if (err instanceof AppError) throw err
-      logger.error('tagsService.getTags failed', { userId, error: err })
+      logger.error('tagsService.getTags failed', { userId, options, error: err })
       throw new AppError(ErrorCode.INTERNAL_ERROR, 'Failed to fetch tags', 500)
     }
   },

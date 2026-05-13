@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { ClipDomainModel, ClipModel, PaginationMeta } from '@inkmark/shared'
-import { ApiError, fetchClipDomains, fetchMyClipsFiltered } from '../api/client'
+import type { ClipModel, PaginationMeta, TagWithCountModel } from '@inkmark/shared'
+import { ApiError, fetchMyClipsFiltered, fetchTags } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { LibraryClipCard } from '../components/LibraryClipCard'
-import { displayRootDomain } from '../lib/displayRootDomain'
 import {
   buildLibrarySearchParams,
   LIBRARY_CLIPS_PER_PAGE,
@@ -19,7 +18,7 @@ export function LibraryPage(): React.ReactElement {
 
   const init = parseLibrarySearchParams(searchParams)
   const [clips, setClips] = useState<ClipModel[]>([])
-  const [domains, setDomains] = useState<ClipDomainModel[]>([])
+  const [tags, setTags] = useState<TagWithCountModel[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -77,13 +76,13 @@ export function LibraryPage(): React.ReactElement {
     }, { replace: true })
   }, [debouncedQuery, filterKey, sort, setSearchParams])
 
-  // Load top domains once
+  // Load top tags once
   useEffect(() => {
     if (!token) return
     void (async () => {
       try {
-        const d = await fetchClipDomains(token, 5)
-        setDomains(d)
+        const t = await fetchTags(token, { limit: 5, sort: 'highlights' })
+        setTags(t)
       } catch {
         // Non-critical — pills just won't show
       }
@@ -109,7 +108,7 @@ export function LibraryPage(): React.ReactElement {
         }
         if (debouncedQuery) params.q = debouncedQuery
         if (filterKey === 'highlighted') params.highlighted = true
-        else if (filterKey.startsWith('domain:')) params.domain = filterKey.slice('domain:'.length)
+        else if (filterKey.startsWith('tag:')) params.tag = filterKey.slice('tag:'.length)
 
         const result = await fetchMyClipsFiltered(token, params)
         setClips((prev) => (append ? [...prev, ...result.clips] : result.clips))
@@ -222,14 +221,14 @@ export function LibraryPage(): React.ReactElement {
           >
             Highlighted
           </button>
-          {domains.map((d) => (
+          {tags.map((t) => (
             <button
-              key={d.domain}
+              key={t.id}
               type="button"
-              className={`library-chip${filterKey === `domain:${d.domain}` ? ' library-chip--active' : ''}`}
-              onClick={() => setFilterKey(`domain:${d.domain}`)}
+              className={`library-chip${filterKey === `tag:${t.name}` ? ' library-chip--active' : ''}`}
+              onClick={() => setFilterKey(`tag:${t.name}`)}
             >
-              {displayRootDomain(d.domain)}
+              {t.name}
             </button>
           ))}
         </div>

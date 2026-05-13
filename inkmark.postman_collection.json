@@ -750,7 +750,7 @@
           "request": {
             "method": "GET", "header": [],
             "url": { "raw": "{{baseUrl}}/tags", "host": ["{{baseUrl}}"], "path": ["tags"] },
-            "description": "Returns all of the authenticated user's tags, each including a clip count. Ordered alphabetically by name."
+            "description": "Returns the authenticated user's tags, each including clip and highlight counts.\n\n**Optional**: `sort` (`name` | `clips` | `highlights`, default: `name`), `limit` (1–20)."
           },
           "response": [
             {
@@ -758,7 +758,7 @@
               "originalRequest": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/tags", "host": ["{{baseUrl}}"], "path": ["tags"] } },
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"clx1tag001\",\n      \"userId\": \"clx1abc123def456\",\n      \"name\": \"reading\",\n      \"_count\": { \"clips\": 5 }\n    },\n    {\n      \"id\": \"clx1tag002\",\n      \"userId\": \"clx1abc123def456\",\n      \"name\": \"tech\",\n      \"_count\": { \"clips\": 3 }\n    }\n  ]\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"clx1tag001\",\n      \"userId\": \"clx1abc123def456\",\n      \"name\": \"reading\",\n      \"_count\": { \"clips\": 5 },\n      \"highlightCount\": 12\n    },\n    {\n      \"id\": \"clx1tag002\",\n      \"userId\": \"clx1abc123def456\",\n      \"name\": \"tech\",\n      \"_count\": { \"clips\": 3 },\n      \"highlightCount\": 7\n    }\n  ]\n}"
             }
           ]
         },
