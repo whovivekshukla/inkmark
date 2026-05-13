@@ -4,19 +4,16 @@ import prisma from '@/lib/prisma'
 import { handlePrismaError } from '@/lib/prisma-error'
 import { SearchFilters } from './search.types'
 
-// Clip shape returned by the raw FTS query — mirrors ClipModel without tags
-interface ClipSearchRow {
-  id: string
-  userId: string
-  url: string
-  domain: string
-  title: string | null
-  description: string | null
-  ogImage: string | null
-  faviconUrl: string | null
-  isPublic: boolean
-  savedAt: Date
-  updatedAt: Date
+function containsInsensitive(q: string) {
+  return { contains: q, mode: 'insensitive' as const }
+}
+
+function dateRange(from?: Date, to?: Date): Prisma.DateTimeFilter | undefined {
+  if (!from && !to) return undefined
+  return {
+    ...(from ? { gte: from } : {}),
+    ...(to ? { lte: to } : {}),
+  }
 }
 
 export const searchRepository = {
@@ -26,51 +23,51 @@ export const searchRepository = {
     filters: SearchFilters,
   ): Promise<{ clips: ClipModel[]; total: number }> {
     try {
-      const offset = (filters.page - 1) * filters.limit
+      const text = containsInsensitive(q.trim())
+      const savedAt = dateRange(filters.from, filters.to)
+      const where: Prisma.ClipWhereInput = {
+        userId,
+        deletedAt: null,
+        ...(savedAt ? { savedAt } : {}),
+        OR: [
+          { title: text },
+          { description: text },
+          { url: text },
+          { domain: text },
+          {
+            tags: {
+              some: {
+                tag: {
+                  userId,
+                  name: text,
+                },
+              },
+            },
+          },
+          {
+            highlights: {
+              some: {
+                userId,
+                deletedAt: null,
+                text,
+              },
+            },
+          },
+        ],
+      }
 
-      // Raw query required: Prisma does not support the tsvector @@ plainto_tsquery operator.
-      // Results are ranked by ts_rank so most relevant clips appear first.
-      const fromClause = filters.from ? Prisma.sql`AND saved_at >= ${filters.from}` : Prisma.empty
-      const toClause = filters.to ? Prisma.sql`AND saved_at <= ${filters.to}` : Prisma.empty
-
-      const [rows, countRows] = await Promise.all([
-        prisma.$queryRaw<ClipSearchRow[]>`
-          SELECT
-            id,
-            user_id        AS "userId",
-            url,
-            domain,
-            title,
-            description,
-            og_image       AS "ogImage",
-            favicon_url    AS "faviconUrl",
-            is_public      AS "isPublic",
-            saved_at       AS "savedAt",
-            updated_at     AS "updatedAt"
-          FROM clips
-          WHERE search_vector @@ plainto_tsquery('english', ${q})
-            AND user_id    =  ${userId}
-            AND deleted_at IS NULL
-            ${fromClause}
-            ${toClause}
-          ORDER BY ts_rank(search_vector, plainto_tsquery('english', ${q})) DESC
-          LIMIT  ${filters.limit}
-          OFFSET ${offset}
-        `,
-        prisma.$queryRaw<[{ count: bigint }]>`
-          SELECT COUNT(*) AS count
-          FROM clips
-          WHERE search_vector @@ plainto_tsquery('english', ${q})
-            AND user_id    =  ${userId}
-            AND deleted_at IS NULL
-            ${fromClause}
-            ${toClause}
-        `,
+      const [clips, total] = await Promise.all([
+        prisma.clip.findMany({
+          where,
+          include: { tags: { include: { tag: true } } },
+          orderBy: { savedAt: 'desc' },
+          skip: (filters.page - 1) * filters.limit,
+          take: filters.limit,
+        }),
+        prisma.clip.count({ where }),
       ])
 
-      // Raw query rows don't include tags — return as ClipModel with empty tags array
-      const clips = rows.map((r) => ({ ...r, tags: [] })) as ClipModel[]
-      return { clips, total: Number(countRows[0].count) }
+      return { clips, total }
     } catch (err) {
       throw handlePrismaError(err)
     }
@@ -82,18 +79,13 @@ export const searchRepository = {
     filters: SearchFilters,
   ): Promise<{ highlights: HighlightModel[]; total: number }> {
     try {
-      const where = {
+      const createdAt = dateRange(filters.from, filters.to)
+      const where: Prisma.HighlightWhereInput = {
         userId,
         deletedAt: null,
-        text: { contains: q, mode: 'insensitive' as const },
-        ...(filters.from || filters.to
-          ? {
-              createdAt: {
-                ...(filters.from ? { gte: filters.from } : {}),
-                ...(filters.to ? { lte: filters.to } : {}),
-              },
-            }
-          : {}),
+        text: containsInsensitive(q.trim()),
+        clip: { deletedAt: null },
+        ...(createdAt ? { createdAt } : {}),
       }
 
       const [highlights, total] = await Promise.all([
