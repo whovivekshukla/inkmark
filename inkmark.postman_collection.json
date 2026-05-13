@@ -815,7 +815,7 @@
     },
     {
       "name": "Search",
-      "description": "Full-text search across the authenticated user's clips and highlights.",
+      "description": "Basic search across the authenticated user's clips and highlights.",
       "item": [
         {
           "name": "Search",
@@ -833,7 +833,7 @@
                 { "key": "to",    "value": "2025-12-31T23:59:59.999Z", "description": "Filter to date (ISO 8601)",   "disabled": true }
               ]
             },
-            "description": "Search the authenticated user's own content.\n\n- **`type=clips`**: Full-text search using PostgreSQL `tsvector` + `ts_rank` (ranked by relevance)\n- **`type=highlights`**: Case-insensitive text search on highlight content\n- **`type=all`**: Both, returned as `{ clips: [...], highlights: [...] }` (no per-type pagination meta)\n\n**Required**: `q`\n**Optional**: `type` (default: all), `page`, `limit`, `from`, `to`"
+            "description": "Search the authenticated user's own content.\n\n- **`type=clips`**: Case-insensitive basic search across clip title, description, URL, domain, tag names, and the user's highlight text on those clips\n- **`type=highlights`**: Case-insensitive basic search on the user's highlight text\n- **`type=all`**: Both, returned as `{ clips: [...], highlights: [...] }` (no per-type pagination meta)\n\n**Required**: `q`\n**Optional**: `type` (default: all), `page`, `limit`, `from`, `to`"
           },
           "response": [
             {
