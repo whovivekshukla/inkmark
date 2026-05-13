@@ -3,7 +3,6 @@
  * Configure `VITE_API_URL` like Postman’s `baseUrl` (default includes `/api/v1`).
  */
 import type {
-  ClipDomainModel,
   ClipModel,
   ClipTagModel,
   FeedClipModel,
@@ -13,6 +12,7 @@ import type {
   PaginationMeta,
   PersonalAccessTokenCreatedModel,
   PersonalAccessTokenModel,
+  TagWithCountModel,
   UserModel,
   UserProfileModel,
   UserSummaryModel,
@@ -437,20 +437,24 @@ export async function searchInkmark(
   throw new ApiError("Unexpected search response", "UNKNOWN");
 }
 
-export async function fetchClipDomains(
+export async function fetchTags(
   token: string,
-  limit = 5,
-): Promise<ClipDomainModel[]> {
-  const res = await fetch(`${getApiBase()}/clips/domains?limit=${limit}`, {
+  params: { limit?: number; sort?: "name" | "clips" | "highlights" } = {},
+): Promise<TagWithCountModel[]> {
+  const qs = new URLSearchParams();
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.sort) qs.set("sort", params.sort);
+  const query = qs.toString();
+  const res = await fetch(`${getApiBase()}/tags${query ? `?${query}` : ""}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return parseResponse<ClipDomainModel[]>(res);
+  return parseResponse<TagWithCountModel[]>(res);
 }
 
 export interface FetchClipsParams {
   page?: number;
   limit?: number;
-  domain?: string;
+  tag?: string;
   q?: string;
   highlighted?: boolean;
   sort?: "recent" | "oldest" | "most_highlights";
@@ -463,7 +467,7 @@ export async function fetchMyClipsFiltered(
   const qs = new URLSearchParams();
   qs.set("page", String(params.page ?? 1));
   qs.set("limit", String(params.limit ?? 50));
-  if (params.domain) qs.set("domain", params.domain);
+  if (params.tag) qs.set("tag", params.tag);
   if (params.q) qs.set("q", params.q);
   if (params.highlighted) qs.set("highlighted", "true");
   if (params.sort) qs.set("sort", params.sort);

@@ -1,4 +1,4 @@
-import { ClipModel, ClipTagModel, ClipDomainModel } from '@inkmark/shared'
+import { ClipModel, ClipTagModel } from '@inkmark/shared'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { handlePrismaError } from '@/lib/prisma-error'
@@ -300,21 +300,6 @@ export const clipRepository = {
           include: { tag: true },
         })
       })
-    } catch (err) {
-      throw handlePrismaError(err)
-    }
-  },
-
-  async getTopDomains(userId: string, limit: number): Promise<ClipDomainModel[]> {
-    try {
-      const results = await prisma.clip.groupBy({
-        by: ['domain'],
-        where: { userId, deletedAt: null },
-        _count: { domain: true },
-        orderBy: { _count: { domain: 'desc' } },
-        take: limit,
-      })
-      return results.map((r) => ({ domain: r.domain, count: r._count.domain }))
     } catch (err) {
       throw handlePrismaError(err)
     }

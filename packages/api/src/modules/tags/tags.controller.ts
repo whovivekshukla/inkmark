@@ -3,7 +3,7 @@ import { tagsService } from './tags.service'
 
 export const tagsController = {
   async getAll(req: Request, res: Response): Promise<void> {
-    const tags = await tagsService.getTags(req.user!.userId)
+    const tags = await tagsService.getTags(req.user!.userId, req.query as never)
     res.status(200).json({ success: true, data: tags })
   },
 

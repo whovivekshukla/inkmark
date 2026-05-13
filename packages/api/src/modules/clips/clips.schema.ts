@@ -29,10 +29,6 @@ export const GetClipsQuerySchema = z.object({
   to: z.coerce.date().optional(),
 })
 
-export const GetDomainsQuerySchema = z.object({
-  limit: z.coerce.number().min(1).max(20).default(5),
-})
-
 export const AddTagSchema = z.object({
   name: z.string().trim().min(1).max(50),
 })
