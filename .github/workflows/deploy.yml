@@ -10,12 +10,13 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
+  initialise:
+    name: Initialise
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Setup PNPM
         uses: pnpm/action-setup@v2
         with:
           version: 10.32.1
@@ -26,14 +27,15 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         run: pnpm typecheck
 
   build:
-    needs: test
+    name: Build
+    needs: initialise
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -42,17 +44,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
+      - name: Log In To Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (api)
+      - name: Extract Metadata (API)
         id: meta_api
         uses: docker/metadata-action@v5
         with:
@@ -64,7 +66,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             latest
 
-      - name: Extract metadata (web)
+      - name: Extract Metadata (Web)
         id: meta_web
         uses: docker/metadata-action@v5
         with:
@@ -76,7 +78,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             latest
 
-      - name: Build and push API image
+      - name: Build And Push API Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -85,7 +87,7 @@ jobs:
           tags: ${{ steps.meta_api.outputs.tags }}
           labels: ${{ steps.meta_api.outputs.labels }}
 
-      - name: Build and push Web image
+      - name: Build And Push Web Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -97,6 +99,7 @@ jobs:
             VITE_API_URL=${{ secrets.VITE_API_URL || 'http://localhost:3000/api/v1' }}
 
   deploy:
+    name: Deploy
     needs: build
     runs-on: ubuntu-latest
     steps:
