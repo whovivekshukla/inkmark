@@ -3,10 +3,11 @@ export interface ClipPageMessage {
   type: 'CLIP_PAGE'
   payload: {
     url: string
-    title: string
+    title?: string
     description?: string
     ogImage?: string
     faviconUrl?: string
+    tabId?: number
   }
 }
 
@@ -42,6 +43,12 @@ export interface ClipStatusMessage {
   url: string
 }
 
+export interface DeleteClipMessage {
+  type: 'DELETE_CLIP'
+  url: string
+  tabId?: number
+}
+
 export interface ClipStatusResponse {
   clipped: boolean
   clipId?: string
@@ -68,3 +75,4 @@ export type ExtensionMessage =
   | RestoreHighlightsMessage
   | GetAuthStatusMessage
   | ClipStatusMessage
+  | DeleteClipMessage

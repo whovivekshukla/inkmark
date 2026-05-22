@@ -72,6 +72,16 @@ export async function fetchMe(token: string): Promise<UserModel> {
   return parseResponse<UserModel>(res);
 }
 
+export async function exchangeOAuthCode(code: string): Promise<string> {
+  const res = await fetch(`${getApiBase()}/auth/exchange`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  const data = await parseResponse<{ token: string }>(res);
+  return data.token;
+}
+
 /** Browser session uses Google JWT; PATs start with `ink_` and cannot call token-management routes. */
 export function isSessionJwt(token: string | null): boolean {
   return Boolean(token && !token.startsWith("ink_"));

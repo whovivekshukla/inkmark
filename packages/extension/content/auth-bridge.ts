@@ -18,5 +18,9 @@ window.addEventListener('inkmark:signout', () => {
 // Fallback: check localStorage on page load (handles existing sessions)
 document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('inkmark_token')
-  if (token) sendToken(token)
+  if (token) {
+    sendToken(token)
+  } else {
+    chrome.runtime.sendMessage({ type: 'CLEAR_TOKEN' })
+  }
 })

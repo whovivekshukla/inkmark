@@ -1,12 +1,13 @@
 import { z } from 'zod'
-import { MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE } from '@/constants/pagination'
+import { LimitQuerySchema, PageQuerySchema } from '@/lib/pagination'
+import { SafeHttpUrlSchema } from '@/lib/url'
 
 export const CreateClipSchema = z.object({
-  url: z.string().url(),
+  url: SafeHttpUrlSchema,
   title: z.string().min(1).max(500).optional(),
   description: z.string().max(1000).optional(),
-  ogImage: z.string().url().optional(),
-  faviconUrl: z.string().url().optional(),
+  ogImage: SafeHttpUrlSchema.optional(),
+  faviconUrl: SafeHttpUrlSchema.optional(),
   isPublic: z.boolean().optional().default(true),
   tags: z.array(z.string().min(1).max(50)).optional(),
 })
@@ -17,9 +18,9 @@ export const UpdateClipSchema = z.object({
 })
 
 export const GetClipsQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
-  url: z.string().url().optional(),
+  page: PageQuerySchema,
+  limit: LimitQuerySchema,
+  url: SafeHttpUrlSchema.optional(),
   tag: z.string().optional(),
   domain: z.string().optional(),
   q: z.string().optional(),

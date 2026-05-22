@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { ClipModel, HighlightModel } from '@inkmark/shared'
 import { ApiError, searchInkmark } from '../api/client'
@@ -14,6 +14,7 @@ export function SearchPage(): React.ReactElement {
   const [highlights, setHighlights] = useState<HighlightModel[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const searchSeqRef = useRef(0)
 
   const qKey = (searchParams.get('q') ?? '').trim()
 
@@ -30,20 +31,24 @@ export function SearchPage(): React.ReactElement {
   const runSearch = useCallback(
     async (query: string): Promise<void> => {
       if (!token) return
+      const seq = searchSeqRef.current + 1
+      searchSeqRef.current = seq
       setLoading(true)
       setError(null)
       try {
         const result = await searchInkmark(token, query, 'all')
+        if (seq !== searchSeqRef.current) return
         if (result.kind === 'all') {
           setClips(result.clips)
           setHighlights(result.highlights)
         }
       } catch (e) {
+        if (seq !== searchSeqRef.current) return
         setClips([])
         setHighlights([])
         setError(e instanceof ApiError ? e.message : 'Search failed')
       } finally {
-        setLoading(false)
+        if (seq === searchSeqRef.current) setLoading(false)
       }
     },
     [token],
@@ -52,9 +57,11 @@ export function SearchPage(): React.ReactElement {
   useEffect(() => {
     if (!token) return
     if (!qKey) {
+      searchSeqRef.current += 1
       setClips([])
       setHighlights([])
       setError(null)
+      setLoading(false)
       return
     }
     void runSearch(qKey)

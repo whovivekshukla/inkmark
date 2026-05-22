@@ -31,6 +31,15 @@ function scrollToHighlight(id: string): void {
   document.getElementById(`highlight-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 }
 
+function safeExternalUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null
+  } catch {
+    return null
+  }
+}
+
 export function ClipDetailPage(): React.ReactElement {
   const { clipId } = useParams<{ clipId: string }>()
   const location = useLocation()
@@ -217,6 +226,7 @@ export function ClipDetailPage(): React.ReactElement {
   const desc = clip.description?.trim()
   const tags = clip.tags ?? []
   const showAlsoLabel = mine.length > 0 && others.length > 0
+  const readOriginalUrl = safeExternalUrl(clip.url)
 
   return (
     <div className="page-wide clip-detail-page">
@@ -285,9 +295,15 @@ export function ClipDetailPage(): React.ReactElement {
 
         <aside className="clip-detail-aside" aria-label="Clip actions">
           <div className="clip-detail-card clip-detail-card--actions">
-            <a className="btn btn--primary clip-detail-read-original" href={clip.url} target="_blank" rel="noopener noreferrer">
-              Read original
-            </a>
+            {readOriginalUrl ? (
+              <a className="btn btn--primary clip-detail-read-original" href={readOriginalUrl} target="_blank" rel="noopener noreferrer">
+                Read original
+              </a>
+            ) : (
+              <span className="btn btn--primary clip-detail-read-original" aria-disabled="true">
+                Read original unavailable
+              </span>
+            )}
             <p className="clip-detail-actions-meta">
               Saved {formatShortRelative(clip.savedAt)} · {domainLabel}
             </p>

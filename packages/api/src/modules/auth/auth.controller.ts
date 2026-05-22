@@ -8,9 +8,17 @@ export const authController = {
   // GET /api/v1/auth/google/callback
   // Passport has already verified OAuth and set req.user = { userId }
   async googleCallback(req: Request, res: Response): Promise<void> {
-    const token = authService.generateJwt(req.user!.userId)
+    const code = authService.createOAuthCode(req.user!.userId)
     const base = process.env.CLIENT_REDIRECT_URL ?? 'http://localhost:5173'
-    res.redirect(`${base}?token=${token}`)
+    const redirectUrl = new URL(base)
+    redirectUrl.searchParams.set('code', code)
+    res.redirect(redirectUrl.toString())
+  },
+
+  // POST /api/v1/auth/exchange — swaps a one-time OAuth code for a session JWT
+  exchangeOAuthCode(req: Request, res: Response): void {
+    const token = authService.exchangeOAuthCode(req.body.code)
+    res.status(200).json({ success: true, data: { token } })
   },
 
   // GET /api/v1/auth/me — protected by requireAuth

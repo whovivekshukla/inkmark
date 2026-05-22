@@ -4,6 +4,12 @@ import { AppError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
 import { ErrorCode } from '@/constants/error-codes'
 
+interface HttpBodyError extends Error {
+  status?: number
+  statusCode?: number
+  type?: string
+}
+
 export function errorHandler(
   err: unknown,
   req: Request,
@@ -87,6 +93,31 @@ export function errorHandler(
     res.status(500).json({
       success: false,
       error: { code: ErrorCode.INTERNAL_ERROR, message: 'Database connection error' },
+    })
+    return
+  }
+
+  const bodyErr = err && typeof err === 'object' ? (err as HttpBodyError) : null
+  if (
+    bodyErr &&
+    bodyErr instanceof SyntaxError &&
+    bodyErr.status === 400 &&
+    bodyErr.type === 'entity.parse.failed'
+  ) {
+    res.status(400).json({
+      success: false,
+      error: { code: ErrorCode.VALIDATION_ERROR, message: 'Invalid JSON body' },
+    })
+    return
+  }
+
+  if (
+    bodyErr &&
+    (bodyErr.type === 'entity.too.large' || bodyErr.status === 413 || bodyErr.statusCode === 413)
+  ) {
+    res.status(413).json({
+      success: false,
+      error: { code: ErrorCode.VALIDATION_ERROR, message: 'Request body too large' },
     })
     return
   }

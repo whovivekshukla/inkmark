@@ -63,20 +63,7 @@ async function init(): Promise<void> {
     return
   }
 
-  // Auto-clip the page
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  const response = await chrome.runtime.sendMessage({
-    type: 'CLIP_PAGE',
-    payload: { url: tab.url, title: tab.title },
-  })
-
-  if (response?.success) {
-    showState('clipped')
-    highlightCount.textContent = 'Select text on this page to highlight it'
-  } else {
-    // Fall back to manual clip on failure
-    showState('unclipped')
-  }
+  showState('unclipped')
 }
 
 // ─── Event listeners ───────────────────────────────────────────────────────
@@ -106,6 +93,7 @@ btnClip.addEventListener('click', async () => {
     payload: {
       url: tab.url,
       title: tab.title,
+      tabId: tab.id,
     },
   })
 
@@ -119,13 +107,14 @@ btnClip.addEventListener('click', async () => {
 })
 
 btnUnclip.addEventListener('click', async () => {
-  const url = await getCurrentTabUrl()
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const url = tab?.url
   if (!url) return
 
   btnUnclip.setAttribute('disabled', 'true')
   btnUnclip.textContent = 'Removing...'
 
-  const response = await chrome.runtime.sendMessage({ type: 'DELETE_CLIP', url })
+  const response = await chrome.runtime.sendMessage({ type: 'DELETE_CLIP', url, tabId: tab.id })
 
   if (response?.success) {
     showState('unclipped')

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import type { UserModel } from '@inkmark/shared'
 import {
   clearStoredToken,
+  exchangeOAuthCode,
   fetchMe,
   getStoredToken,
   setStoredToken,
@@ -41,13 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.React
 
     async function init(): Promise<void> {
       const params = new URLSearchParams(window.location.search)
-      const urlToken = params.get('token')
-      const fromOAuth = Boolean(urlToken)
+      const oauthCode = params.get('code')
+      const fromOAuth = Boolean(oauthCode)
 
-      if (urlToken) {
-        setStoredToken(urlToken)
+      if (oauthCode) {
         window.history.replaceState({}, '', `${window.location.pathname}`)
-        window.dispatchEvent(new CustomEvent('inkmark:auth', { detail: { token: urlToken } }))
+        try {
+          const exchangedToken = await exchangeOAuthCode(oauthCode)
+          setStoredToken(exchangedToken)
+          window.dispatchEvent(new CustomEvent('inkmark:auth', { detail: { token: exchangedToken } }))
+        } catch {
+          clearStoredToken()
+        }
       }
 
       const stored = getStoredToken()
