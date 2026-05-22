@@ -115,7 +115,7 @@ export const feedRepository = {
           where,
           include: {
             user: { select: USER_SUMMARY_SELECT },
-            clip: { select: { id: true, url: true, title: true, domain: true } },
+            clip: { select: { id: true, url: true, title: true, domain: true, source: true } },
           },
           orderBy: { createdAt: 'desc' },
           skip: (page - 1) * limit,

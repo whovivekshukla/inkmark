@@ -75,7 +75,7 @@ export async function clipPage(
 ): Promise<ClipModel> {
   return request<ClipModel>('/api/v1/clips', token, {
     method: 'POST',
-    body: JSON.stringify({ ...data, isPublic: true }),
+    body: JSON.stringify({ ...data, source: 'EXTENSION', isPublic: true }),
   })
 }
 

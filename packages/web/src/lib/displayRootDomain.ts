@@ -1,5 +1,6 @@
 /** Compact host for UI chips (strip www., collapse common subdomains to registrable-style label). */
-export function displayRootDomain(host: string): string {
+export function displayRootDomain(host: string | null | undefined): string {
+  if (!host) return ''
   const h = host.trim().toLowerCase()
   if (!h) return host
   const s = h.startsWith('www.') ? h.slice(4) : h

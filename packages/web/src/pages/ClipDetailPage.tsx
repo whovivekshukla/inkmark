@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthContext'
 import { clipBackFromState } from '../lib/clipBackNav'
 import { displayRootDomain } from '../lib/displayRootDomain'
 import { formatShortRelative } from '../lib/formatRelative'
+import { SourceBadge } from '../components/SourceBadge'
 
 function navPreview(text: string, max = 60): string {
   if (text.length <= max) return text
@@ -31,7 +32,8 @@ function scrollToHighlight(id: string): void {
   document.getElementById(`highlight-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 }
 
-function safeExternalUrl(url: string): string | null {
+function safeExternalUrl(url: string | null): string | null {
+  if (!url) return null
   try {
     const parsed = new URL(url)
     return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null
@@ -118,7 +120,7 @@ export function ClipDetailPage(): React.ReactElement {
     }
   }, [highlights, me?.id])
 
-  const domainLabel = clip ? displayRootDomain(clip.domain) : ''
+  const domainLabel = clip ? displayRootDomain(clip.domain) || clip.source.toLowerCase() : ''
   const domainLetter = domainLabel.replace(/[^a-z0-9]/gi, '').slice(0, 1).toUpperCase() || '?'
 
   const onDeleteHighlight = useCallback(
@@ -255,6 +257,7 @@ export function ClipDetailPage(): React.ReactElement {
                 </span>
               )}
               <span className="clip-detail-domain-label">{domainLabel}</span>
+              <SourceBadge source={clip.source} />
             </div>
             <h1 className="clip-detail-title">{title}</h1>
             {desc ? <p className="clip-detail-desc">{desc}</p> : null}

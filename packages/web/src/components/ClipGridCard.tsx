@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { ClipModel, FeedHighlightPreviewModel } from '@inkmark/shared'
 import { formatShortRelative } from '../lib/formatRelative'
+import { SourceBadge } from './SourceBadge'
 
 interface ClipGridCardProps {
   clip: ClipModel & { highlightPreviews?: FeedHighlightPreviewModel[] }
@@ -14,7 +15,7 @@ export function ClipGridCard({ clip, linkState }: ClipGridCardProps): React.Reac
 
   return (
     <Link className="clip-grid-card" to={`/clips/${encodeURIComponent(clip.id)}`} state={linkState}>
-      <span className="clip-grid-domain">{clip.domain}</span>
+      <span className="clip-grid-domain">{clip.domain ?? clip.source.toLowerCase()}</span>
       <h2 className="clip-grid-title">{title}</h2>
       <div className="clip-grid-meta">
         <span>{saved}</span>
@@ -24,6 +25,7 @@ export function ClipGridCard({ clip, linkState }: ClipGridCardProps): React.Reac
             · {clip.tags.length} tag{clip.tags.length === 1 ? '' : 's'}
           </span>
         ) : null}
+        <SourceBadge source={clip.source} />
       </div>
       {clip.highlightPreviews && clip.highlightPreviews.length > 0 ? (
         <div className="clip-grid-previews">

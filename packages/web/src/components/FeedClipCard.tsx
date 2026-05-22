@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { FeedClipModel } from '@inkmark/shared'
 import { displayRootDomain } from '../lib/displayRootDomain'
 import { formatShortRelative } from '../lib/formatRelative'
+import { SourceBadge } from './SourceBadge'
 
 const HL_DOT_CAP = 4
 
@@ -34,7 +35,7 @@ export function FeedClipCard({ clip, linkState }: FeedClipCardProps): React.Reac
   const hasHighlights = count > 0 && clip.firstHighlight != null
   const accent = feedAccent(clip)
   const saved = formatShortRelative(clip.savedAt)
-  const domainLabel = displayRootDomain(clip.domain)
+  const domainLabel = displayRootDomain(clip.domain) || clip.source.toLowerCase()
   const title = clip.title?.trim() || clip.domain || 'Untitled'
   const attribution = `${title} — ${domainLabel}`
 
@@ -69,6 +70,7 @@ export function FeedClipCard({ clip, linkState }: FeedClipCardProps): React.Reac
 
       <div className="feed-clip-card__footer">
         <span className="feed-clip-card__time">clipped {saved}</span>
+        <SourceBadge source={clip.source} />
         {count > 0 ? (
           <span className="feed-clip-card__hl">
             <span className="feed-clip-card__hl-label">
