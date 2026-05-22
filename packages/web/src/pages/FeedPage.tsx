@@ -120,11 +120,25 @@ export function FeedPage(): React.ReactElement {
       ) : empty ? (
         <p className="empty-state">No clips yet. Save a clip or follow readers for their public clips.</p>
       ) : filteredEmpty ? (
-        <p className="empty-state">
-          {feedTab === 'clips'
-            ? 'No clips without highlights in this view. Try All or Highlights.'
-            : 'No clips with highlights in this view. Try All or Clips.'}
-        </p>
+        <>
+          <p className="empty-state">
+            {feedTab === 'clips'
+              ? 'No clips without highlights in the loaded items.'
+              : 'No clips with highlights in the loaded items.'}
+          </p>
+          {clipsHasMore ? (
+            <div className="feed-load-more-wrap">
+              <button
+                type="button"
+                className="feed-load-more"
+                disabled={clipsLoadingMore}
+                onClick={handleLoadMore}
+              >
+                {clipsLoadingMore ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          ) : null}
+        </>
       ) : (
         <>
           <div className="feed-timeline">

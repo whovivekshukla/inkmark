@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import type { ClipModel, UserProfileModel } from '@inkmark/shared'
+import type { ClipModel, PaginationMeta, UserProfileModel } from '@inkmark/shared'
 import {
   ApiError,
   fetchFollowCounts,
@@ -18,8 +18,10 @@ export function ProfilePage(): React.ReactElement {
   const [clips, setClips] = useState<ClipModel[]>([])
   const [followerCount, setFollowerCount] = useState<number | null>(null)
   const [followingCount, setFollowingCount] = useState<number | null>(null)
+  const [clipsMeta, setClipsMeta] = useState<PaginationMeta | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const safeUsername = username?.trim() ?? ''
 
@@ -28,6 +30,7 @@ export function ProfilePage(): React.ReactElement {
       setLoading(false)
       setProfile(null)
       setClips([])
+      setClipsMeta(null)
       return
     }
 
@@ -40,12 +43,13 @@ export function ProfilePage(): React.ReactElement {
         const p = await fetchPublicProfile(token, safeUsername)
         if (cancelled) return
         setProfile(p)
-        const [{ clips: list }, counts] = await Promise.all([
+        const [{ clips: list, meta }, counts] = await Promise.all([
           fetchPublicClips(token, safeUsername, 1, 100),
           fetchFollowCounts(token, p.id),
         ])
         if (!cancelled) {
           setClips(list)
+          setClipsMeta(meta)
           setFollowerCount(counts.followerCount)
           setFollowingCount(counts.followingCount)
         }
@@ -53,6 +57,7 @@ export function ProfilePage(): React.ReactElement {
         if (!cancelled) {
           setProfile(null)
           setClips([])
+          setClipsMeta(null)
           setFollowerCount(null)
           setFollowingCount(null)
           setError(e instanceof ApiError ? e.message : 'Failed to load profile')
@@ -66,6 +71,22 @@ export function ProfilePage(): React.ReactElement {
       cancelled = true
     }
   }, [safeUsername, token])
+
+  const loadMoreClips = async (): Promise<void> => {
+    if (!token || !safeUsername || !clipsMeta?.hasMore || loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const nextPage = clipsMeta.page + 1
+      const { clips: list, meta } = await fetchPublicClips(token, safeUsername, nextPage, clipsMeta.limit)
+      setClips((prev) => [...prev, ...list])
+      setClipsMeta(meta)
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Failed to load more clips')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -142,11 +163,25 @@ export function ProfilePage(): React.ReactElement {
         {clips.length === 0 ? (
           <p className="empty-state">No public clips yet.</p>
         ) : (
-          <div className="clip-grid">
-            {clips.map((c) => (
-              <ClipGridCard key={c.id} clip={c} linkState={{ from: `/${safeUsername}` }} />
-            ))}
-          </div>
+          <>
+            <div className="clip-grid">
+              {clips.map((c) => (
+                <ClipGridCard key={c.id} clip={c} linkState={{ from: `/${safeUsername}` }} />
+              ))}
+            </div>
+            {clipsMeta?.hasMore ? (
+              <div className="library-load-more-wrap">
+                <button
+                  type="button"
+                  className="library-load-more"
+                  disabled={loadingMore}
+                  onClick={() => void loadMoreClips()}
+                >
+                  {loadingMore ? 'Loading…' : 'Load more'}
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
     </div>

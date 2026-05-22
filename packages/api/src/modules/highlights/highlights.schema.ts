@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { HighlightColor } from '@inkmark/shared'
+import { SafeHttpUrlSchema } from '@/lib/url'
 
 export const CreateHighlightSchema = z.object({
   clipId: z.string().min(1),
@@ -19,5 +20,5 @@ export const HighlightIdParamSchema = z.object({
 })
 
 export const HighlightsByUrlQuerySchema = z.object({
-  url: z.string().url(),
+  url: SafeHttpUrlSchema,
 })

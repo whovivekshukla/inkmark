@@ -15,6 +15,16 @@ interface ApiErrorResponse {
 
 type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse
 
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message)
+    this.name = 'ApiRequestError'
+  }
+}
+
 async function request<T>(path: string, token: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -29,7 +39,7 @@ async function request<T>(path: string, token: string, options?: RequestInit): P
 
   if (!res.ok || !json.success) {
     const errorMsg = !json.success ? json.error.message : `API error ${res.status}`
-    throw new Error(errorMsg)
+    throw new ApiRequestError(errorMsg, res.status)
   }
 
   return json.data
@@ -45,9 +55,14 @@ export async function getClipByUrl(url: string, token: string): Promise<{ clippe
     headers: { Authorization: `Bearer ${token}` },
   })
 
-  const json = (await res.json()) as ApiSuccessResponse<ClipModel[]>
+  const json = (await res.json()) as ApiResponse<ClipModel[]>
 
-  if (json.success && json.data.length > 0) {
+  if (!res.ok || !json.success) {
+    const errorMsg = !json.success ? json.error.message : `API error ${res.status}`
+    throw new ApiRequestError(errorMsg, res.status)
+  }
+
+  if (json.data.length > 0) {
     return { clipped: true, clipId: json.data[0].id }
   }
 

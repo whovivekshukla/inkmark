@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import { Profile as GoogleProfile } from 'passport-google-oauth20'
 import { UserModel } from '@inkmark/shared'
 import { authRepository } from './auth.repository'
@@ -10,6 +11,16 @@ import { logger } from '@/lib/logger'
 import { buildUsername } from '@/lib/utils'
 import { auditLogService } from '@/modules/audit-log'
 import prisma from '@/lib/prisma'
+
+const OAUTH_CODE_TTL_MS = 2 * 60 * 1000
+const oauthCodes = new Map<string, { userId: string; expiresAt: number }>()
+
+function pruneExpiredOAuthCodes(): void {
+  const now = Date.now()
+  for (const [code, entry] of oauthCodes) {
+    if (entry.expiresAt <= now) oauthCodes.delete(code)
+  }
+}
 
 export const authService = {
   async upsertUserFromGoogle(profile: GoogleProfile): Promise<UserModel> {
@@ -76,6 +87,25 @@ export const authService = {
     } catch {
       throw new AppError(ErrorCode.AUTH_TOKEN_INVALID, 'Invalid or expired token', 401)
     }
+  },
+
+  createOAuthCode(userId: string): string {
+    pruneExpiredOAuthCodes()
+    const code = crypto.randomBytes(32).toString('base64url')
+    oauthCodes.set(code, { userId, expiresAt: Date.now() + OAUTH_CODE_TTL_MS })
+    return code
+  },
+
+  exchangeOAuthCode(code: string): string {
+    pruneExpiredOAuthCodes()
+    const entry = oauthCodes.get(code)
+    oauthCodes.delete(code)
+
+    if (!entry || entry.expiresAt <= Date.now()) {
+      throw new AppError(ErrorCode.AUTH_TOKEN_INVALID, 'Invalid or expired OAuth code', 401)
+    }
+
+    return this.generateJwt(entry.userId)
   },
 
   async getMe(userId: string): Promise<UserModel> {

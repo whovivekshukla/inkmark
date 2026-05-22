@@ -1,6 +1,7 @@
 import { getToken, getUserId, getCachedClipStatus, setCachedClipStatus, clearCachedClipStatus, getCachedHighlights, setCachedHighlights, clearCachedHighlights } from '../lib/storage'
-import { getClipByUrl, getHighlightsForUrl, clipPage, createHighlight, deleteHighlight, deleteClip } from '../lib/api'
+import { ApiRequestError, getMe, getClipByUrl, getHighlightsForUrl, clipPage, createHighlight, deleteHighlight, deleteClip } from '../lib/api'
 import { signInWithToken, signOut } from '../lib/auth'
+import { canonicalizeUrl } from '../lib/url'
 import type { HighlightWithUserModel } from '@inkmark/shared'
 import type { HighlightForRestore } from '../types'
 
@@ -26,6 +27,10 @@ function toRestorePayload(highlights: HighlightWithUserModel[], currentUserId: s
   }))
 }
 
+function isAuthFailure(err: unknown): boolean {
+  return err instanceof ApiRequestError && (err.status === 401 || err.status === 403)
+}
+
 // ─── Tab navigation handler ────────────────────────────────────────────────
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -40,10 +45,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
   try {
     // Check clip status (cache first)
-    let clipStatus = await getCachedClipStatus(tab.url)
+    const pageUrl = canonicalizeUrl(tab.url)
+    let clipStatus = await getCachedClipStatus(pageUrl)
     if (!clipStatus) {
-      clipStatus = await getClipByUrl(tab.url, token)
-      await setCachedClipStatus(tab.url, clipStatus)
+      clipStatus = await getClipByUrl(pageUrl, token)
+      await setCachedClipStatus(pageUrl, clipStatus)
     }
 
     updateBadge(tabId, clipStatus.clipped)
@@ -53,10 +59,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
 
       // Fetch highlights (cache first)
-      let highlights = await getCachedHighlights<HighlightWithUserModel>(tab.url)
+      let highlights = await getCachedHighlights<HighlightWithUserModel>(pageUrl)
       if (!highlights) {
-        highlights = await getHighlightsForUrl(tab.url, token)
-        await setCachedHighlights(tab.url, highlights)
+        highlights = await getHighlightsForUrl(pageUrl, token)
+        await setCachedHighlights(pageUrl, highlights)
       }
 
       if (highlights.length > 0) {
@@ -66,7 +72,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         })
       }
     }
-  } catch {
+  } catch (err) {
+    if (isAuthFailure(err)) await signOut()
     // Non-critical — don't crash the service worker
   }
 })
@@ -75,14 +82,24 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_AUTH_STATUS') {
-    getToken().then((token) => {
-      sendResponse({ authenticated: token !== null })
+    getToken().then(async (token) => {
+      if (!token) {
+        sendResponse({ authenticated: false })
+        return
+      }
+      try {
+        await getMe(token)
+        sendResponse({ authenticated: true })
+      } catch (err) {
+        if (isAuthFailure(err)) await signOut()
+        sendResponse({ authenticated: false })
+      }
     })
     return true // async response
   }
 
   if (message.type === 'GET_PAGE_STATUS') {
-    const url = message.url as string
+    const url = canonicalizeUrl(message.url as string)
     getToken().then(async (token) => {
       if (!token) {
         sendResponse({ clipped: false })
@@ -108,7 +125,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           clipped: true,
           highlights: toRestorePayload(highlights, userId),
         })
-      } catch {
+      } catch (err) {
+        if (isAuthFailure(err)) await signOut()
         sendResponse({ clipped: false })
       }
     })
@@ -116,7 +134,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_CLIP_STATUS') {
-    const url = message.url as string
+    const url = canonicalizeUrl(message.url as string)
     getToken().then(async (token) => {
       if (!token) {
         sendResponse({ clipped: false })
@@ -129,7 +147,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await setCachedClipStatus(url, status)
         }
         sendResponse(status)
-      } catch {
+      } catch (err) {
+        if (isAuthFailure(err)) await signOut()
         sendResponse({ clipped: false })
       }
     })
@@ -143,6 +162,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       description?: string
       ogImage?: string
       faviconUrl?: string
+      tabId?: number
     }
     getToken().then(async (token) => {
       if (!token) {
@@ -150,13 +170,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return
       }
       try {
-        const clip = await clipPage(token, payload)
-        await setCachedClipStatus(payload.url, { clipped: true, clipId: clip.id })
-        // Update badge and notify content script on the active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-        if (tab?.id) {
-          updateBadge(tab.id, true)
-          chrome.tabs.sendMessage(tab.id, { type: 'PAGE_CLIPPED' })
+        const pageUrl = canonicalizeUrl(payload.url)
+        const { tabId, ...clipPayload } = payload
+        const clip = await clipPage(token, { ...clipPayload, url: pageUrl })
+        await setCachedClipStatus(pageUrl, { clipped: true, clipId: clip.id })
+        if (tabId) {
+          updateBadge(tabId, true)
+          chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
         }
         sendResponse({ success: true, clipId: clip.id })
       } catch (err) {
@@ -172,7 +192,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       contextBefore?: string
       contextAfter?: string
     }
-    const tabUrl = sender.tab?.url
+    const tabUrl = sender.tab?.url ? canonicalizeUrl(sender.tab.url) : undefined
     if (!tabUrl) {
       sendResponse({ success: false, error: 'No tab URL' })
       return true
@@ -210,7 +230,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'DELETE_HIGHLIGHT') {
     const highlightId = message.highlightId as string
-    const tabUrl = sender.tab?.url
+    const tabUrl = sender.tab?.url ? canonicalizeUrl(sender.tab.url) : undefined
 
     getToken().then(async (token) => {
       if (!token) {
@@ -231,7 +251,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'DELETE_CLIP') {
-    const url = message.url as string
+    const url = canonicalizeUrl(message.url as string)
+    const tabId = typeof message.tabId === 'number' ? (message.tabId as number) : sender.tab?.id
 
     getToken().then(async (token) => {
       if (!token) {
@@ -248,11 +269,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await clearCachedClipStatus(url)
         await clearCachedHighlights(url)
 
-        // Tell content script to strip all highlight marks from the page
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-        if (tab?.id) {
-          updateBadge(tab.id, false)
-          chrome.tabs.sendMessage(tab.id, { type: 'REMOVE_ALL_HIGHLIGHTS' })
+        // Tell the originating tab to strip all highlight marks from the page
+        if (tabId) {
+          updateBadge(tabId, false)
+          chrome.tabs.sendMessage(tabId, { type: 'REMOVE_ALL_HIGHLIGHTS' })
         }
 
         sendResponse({ success: true })

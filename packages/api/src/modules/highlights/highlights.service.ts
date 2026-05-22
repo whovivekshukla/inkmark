@@ -16,7 +16,14 @@ function assertOwnership(highlight: { userId: string }, userId: string): void {
 export const highlightService = {
   async createHighlight(userId: string, dto: CreateHighlightModel): Promise<HighlightModel> {
     try {
-      // Let the DB FK constraint fail if clipId doesn't exist (P2003 → global handler → 400)
+      const clip = await clipRepository.findById(dto.clipId)
+      if (!clip) {
+        throw new AppError(ErrorCode.CLIP_NOT_FOUND, 'Clip not found', 404)
+      }
+      if (!clip.isPublic && clip.userId !== userId) {
+        throw new AppError(ErrorCode.CLIP_NOT_ACCESSIBLE, 'Clip is not accessible', 403)
+      }
+
       const highlight = await highlightRepository.create({
         clipId: dto.clipId,
         userId,

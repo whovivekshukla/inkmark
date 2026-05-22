@@ -260,7 +260,9 @@ function showToolbar(range: Range): void {
       mark.dataset.createdAt = new Date().toISOString()
       range.surroundContents(mark)
     } catch {
-      // Noop — complex DOM
+      selection?.removeAllRanges()
+      showToast("Couldn't highlight this selection")
+      return
     }
 
     selection?.removeAllRanges()

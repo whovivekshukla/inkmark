@@ -26,6 +26,10 @@ export interface ClipTagModel {
 
 export interface CreateClipModel {
   url: string
+  title?: string
+  description?: string
+  ogImage?: string
+  faviconUrl?: string
   isPublic?: boolean
   tags?: string[]
 }
