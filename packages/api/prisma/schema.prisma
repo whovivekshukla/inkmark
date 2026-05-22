@@ -39,18 +39,19 @@ model User {
 // A "clip" is a saved article/URL by a user.
 
 model Clip {
-  id          String    @id @default(cuid())
-  userId      String    @map("user_id")
-  url         String
-  domain      String
+  id          String     @id @default(cuid())
+  userId      String     @map("user_id")
+  url         String?
+  domain      String?
+  source      ClipSource @default(API)
   title       String?
   description String?
-  ogImage     String?   @map("og_image")
-  faviconUrl  String?   @map("favicon_url")
-  isPublic    Boolean   @default(true) @map("is_public")
-  savedAt     DateTime  @default(now()) @map("saved_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at") // soft delete
+  ogImage     String?    @map("og_image")
+  faviconUrl  String?    @map("favicon_url")
+  isPublic    Boolean    @default(true) @map("is_public")
+  savedAt     DateTime   @default(now()) @map("saved_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at") // soft delete
 
   // Full-text search vector — populated via PostgreSQL trigger on insert/update.
   // Using Unsupported because Prisma does not natively manage tsvector columns.
@@ -63,8 +64,21 @@ model Clip {
   @@index([userId])
   @@index([savedAt])
   @@index([domain])
+  @@index([source])
   @@index([deletedAt])
   @@map("clips")
+}
+
+// ─── ClipSource ──────────────────────────────────────────────────────────────
+// Origin surface that produced a Clip.
+enum ClipSource {
+  WEB
+  EXTENSION
+  MCP
+  CLAUDE
+  CHATGPT
+  CODEX
+  API
 }
 
 // ─── Highlight ───────────────────────────────────────────────────────────────

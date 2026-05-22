@@ -16,17 +16,22 @@ function assertOwnership(clip: { userId: string }, userId: string): void {
 export const clipService = {
   async createClip(userId: string, dto: CreateClipModel): Promise<ClipModel> {
     try {
-      let domain: string
-      try {
-        domain = new URL(dto.url).hostname
-      } catch {
-        throw new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid URL', 400)
+      let url: string | null = null
+      let domain: string | null = null
+      if (dto.url) {
+        try {
+          domain = new URL(dto.url).hostname
+          url = dto.url
+        } catch {
+          throw new AppError(ErrorCode.VALIDATION_ERROR, 'Invalid URL', 400)
+        }
       }
 
       const clip = await clipRepository.create({
         userId,
-        url: dto.url,
+        url,
         domain,
+        source: dto.source,
         isPublic: dto.isPublic ?? true,
         title: dto.title,
         description: dto.description,
@@ -44,7 +49,7 @@ export const clipService = {
         action: AuditAction.CLIP_CREATED,
         entity: 'clips',
         entityId: clip.id,
-        metadata: { url: clip.url },
+        metadata: { url: clip.url, source: clip.source },
       })
 
       return clip

@@ -1,16 +1,23 @@
 import { z } from 'zod'
+import { ClipSource } from '@inkmark/shared'
 import { LimitQuerySchema, PageQuerySchema } from '@/lib/pagination'
 import { SafeHttpUrlSchema } from '@/lib/url'
 
-export const CreateClipSchema = z.object({
-  url: SafeHttpUrlSchema,
-  title: z.string().min(1).max(500).optional(),
-  description: z.string().max(1000).optional(),
-  ogImage: SafeHttpUrlSchema.optional(),
-  faviconUrl: SafeHttpUrlSchema.optional(),
-  isPublic: z.boolean().optional().default(true),
-  tags: z.array(z.string().min(1).max(50)).optional(),
-})
+export const CreateClipSchema = z
+  .object({
+    url: SafeHttpUrlSchema.optional(),
+    source: z.nativeEnum(ClipSource),
+    title: z.string().min(1).max(500).optional(),
+    description: z.string().max(1000).optional(),
+    ogImage: SafeHttpUrlSchema.optional(),
+    faviconUrl: SafeHttpUrlSchema.optional(),
+    isPublic: z.boolean().optional().default(true),
+    tags: z.array(z.string().min(1).max(50)).optional(),
+  })
+  .refine((d) => d.url !== undefined || (d.title && d.title.trim().length > 0), {
+    message: 'Either url or title is required',
+    path: ['url'],
+  })
 
 export const UpdateClipSchema = z.object({
   title: z.string().min(1).optional(),

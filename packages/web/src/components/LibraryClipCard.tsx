@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { ClipModel } from '@inkmark/shared'
 import { displayRootDomain } from '../lib/displayRootDomain'
 import { formatShortRelative } from '../lib/formatRelative'
+import { SourceBadge } from './SourceBadge'
 
 const HL_SWATCH_CAP = 4
 
@@ -22,12 +23,13 @@ interface LibraryClipCardProps {
 
 export function LibraryClipCard({ clip, linkState }: LibraryClipCardProps): React.ReactElement {
   const title = clip.title?.trim() || clip.domain || 'Untitled'
+  const sourceLetter = clip.domain?.slice(0, 1).toUpperCase() ?? clip.source.slice(0, 1).toUpperCase()
   const saved = formatShortRelative(clip.savedAt)
   const accent = accentForClip(clip.id)
   const count = clip.highlightCount ?? 0
   const dotCount = Math.min(HL_SWATCH_CAP, count)
   const overflow = count > HL_SWATCH_CAP ? count - HL_SWATCH_CAP : 0
-  const domainLabel = displayRootDomain(clip.domain)
+  const domainLabel = displayRootDomain(clip.domain) || clip.source.toLowerCase()
 
   return (
     <Link
@@ -47,10 +49,11 @@ export function LibraryClipCard({ clip, linkState }: LibraryClipCardProps): Reac
           />
         ) : (
           <span className="library-clip-card__favicon library-clip-card__favicon--placeholder" aria-hidden>
-            {clip.domain.slice(0, 1).toUpperCase()}
+            {sourceLetter}
           </span>
         )}
         <span className="library-clip-card__domain">{domainLabel}</span>
+        <SourceBadge source={clip.source} />
       </div>
       <h2 className="library-clip-card__title">{title}</h2>
       {clip.tags && clip.tags.length > 0 ? (

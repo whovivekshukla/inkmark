@@ -1,7 +1,8 @@
-import { DateRangeQuery } from '@inkmark/shared'
+import { ClipSource, DateRangeQuery } from '@inkmark/shared'
 
 export interface CreateClipModel {
-  url: string
+  url?: string
+  source: ClipSource
   title?: string
   description?: string
   ogImage?: string
@@ -17,8 +18,9 @@ export interface UpdateClipModel {
 
 export interface CreateClipData {
   userId: string
-  url: string
-  domain: string
+  url: string | null
+  domain: string | null
+  source: ClipSource
   isPublic: boolean
   title?: string
   description?: string

@@ -1,4 +1,4 @@
-import type { ClipTagModel } from './clip'
+import type { ClipSource, ClipTagModel } from './clip'
 import type { UserSummaryModel } from './user'
 
 /** Optional preview snippets for card grids (profile, etc.). */
@@ -19,8 +19,9 @@ export interface FeedFirstHighlightModel {
 export interface FeedClipModel {
   id: string
   userId: string
-  url: string
-  domain: string
+  url: string | null
+  domain: string | null
+  source: ClipSource
   title: string | null
   description: string | null
   ogImage: string | null
@@ -53,8 +54,9 @@ export interface FeedHighlightModel {
   user: UserSummaryModel
   clip: {
     id: string
-    url: string
+    url: string | null
     title: string | null
-    domain: string
+    domain: string | null
+    source: ClipSource
   }
 }
