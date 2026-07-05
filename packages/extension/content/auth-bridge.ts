@@ -1,7 +1,8 @@
 // Runs only on inkmark.flaplabs.xyz — listens for auth events fired by the
 // frontend and forwards them to the service worker.
 function sendToken(token: string) {
-  chrome.runtime.sendMessage({ type: 'SET_TOKEN', token })
+  // Fire-and-forget: the service worker handles the message; no response is awaited here.
+  void chrome.runtime.sendMessage({ type: 'SET_TOKEN', token })
 }
 
 // Listen for auth event dispatched by frontend after OAuth
@@ -12,7 +13,7 @@ window.addEventListener('inkmark:auth', (e) => {
 
 // Listen for signout event
 window.addEventListener('inkmark:signout', () => {
-  chrome.runtime.sendMessage({ type: 'CLEAR_TOKEN' })
+  void chrome.runtime.sendMessage({ type: 'CLEAR_TOKEN' })
 })
 
 // Fallback: check localStorage on page load (handles existing sessions)
@@ -21,6 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (token) {
     sendToken(token)
   } else {
-    chrome.runtime.sendMessage({ type: 'CLEAR_TOKEN' })
+    void chrome.runtime.sendMessage({ type: 'CLEAR_TOKEN' })
   }
 })

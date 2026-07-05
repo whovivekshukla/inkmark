@@ -8,8 +8,9 @@ import type { HighlightForRestore } from '../types'
 // ─── Badge ─────────────────────────────────────────────────────────────────
 
 function updateBadge(tabId: number, clipped: boolean): void {
-  chrome.action.setBadgeText({ tabId, text: clipped ? '✓' : '' })
-  chrome.action.setBadgeBackgroundColor({ tabId, color: '#16a34a' })
+  // Fire-and-forget: badge updates are cosmetic and need not be awaited.
+  void chrome.action.setBadgeText({ tabId, text: clipped ? '✓' : '' })
+  void chrome.action.setBadgeBackgroundColor({ tabId, color: '#16a34a' })
 }
 
 // ─── Highlight mapping ─────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     if (clipStatus.clipped) {
       // Notify content script that this page is clipped (enables highlight toolbar)
-      chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
+      void chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
 
       // Fetch highlights (cache first)
       let highlights = await getCachedHighlights<HighlightWithUserModel>(pageUrl)
@@ -66,7 +67,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       }
 
       if (highlights.length > 0) {
-        chrome.tabs.sendMessage(tabId, {
+        void chrome.tabs.sendMessage(tabId, {
           type: 'RESTORE_HIGHLIGHTS',
           highlights: toRestorePayload(highlights, userId),
         })
@@ -82,7 +83,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_AUTH_STATUS') {
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ authenticated: false })
         return
@@ -100,7 +101,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_PAGE_STATUS') {
     const url = canonicalizeUrl(message.url as string)
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ clipped: false })
         return
@@ -135,7 +136,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_CLIP_STATUS') {
     const url = canonicalizeUrl(message.url as string)
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ clipped: false })
         return
@@ -164,7 +165,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       faviconUrl?: string
       tabId?: number
     }
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ success: false, error: 'Not authenticated' })
         return
@@ -176,7 +177,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         await setCachedClipStatus(pageUrl, { clipped: true, clipId: clip.id })
         if (tabId) {
           updateBadge(tabId, true)
-          chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
+          void chrome.tabs.sendMessage(tabId, { type: 'PAGE_CLIPPED' })
         }
         sendResponse({ success: true, clipId: clip.id })
       } catch (err) {
@@ -198,7 +199,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true
     }
 
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ success: false, error: 'Not authenticated' })
         return
@@ -232,7 +233,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const highlightId = message.highlightId as string
     const tabUrl = sender.tab?.url ? canonicalizeUrl(sender.tab.url) : undefined
 
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ success: false, error: 'Not authenticated' })
         return
@@ -254,7 +255,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const url = canonicalizeUrl(message.url as string)
     const tabId = typeof message.tabId === 'number' ? (message.tabId as number) : sender.tab?.id
 
-    getToken().then(async (token) => {
+    void getToken().then(async (token) => {
       if (!token) {
         sendResponse({ success: false, error: 'Not authenticated' })
         return
@@ -272,7 +273,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Tell the originating tab to strip all highlight marks from the page
         if (tabId) {
           updateBadge(tabId, false)
-          chrome.tabs.sendMessage(tabId, { type: 'REMOVE_ALL_HIGHLIGHTS' })
+          void chrome.tabs.sendMessage(tabId, { type: 'REMOVE_ALL_HIGHLIGHTS' })
         }
 
         sendResponse({ success: true })

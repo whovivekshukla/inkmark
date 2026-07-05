@@ -1,6 +1,8 @@
 import type { ClipModel, HighlightWithUserModel } from '@inkmark/shared'
 
-const API_BASE = 'https://inkmark.flaplabs.xyz'
+// Injected at build time by Vite `define` (see vite.config.ts). Defaults to production;
+// override with INKMARK_EXT_API_URL at build time to target localhost.
+const API_BASE = __API_BASE__
 
 interface ApiSuccessResponse<T> {
   success: true

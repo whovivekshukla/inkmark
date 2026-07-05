@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { clipController } from './clips.controller'
 import { highlightController } from '@/modules/highlights/highlights.controller'
 import { requireAuth } from '@/middleware/auth'
+import { strictRateLimiter } from '@/middleware/rate-limit'
 import { validate } from '@/middleware/validate'
 import {
   CreateClipSchema,
@@ -14,7 +15,7 @@ import {
 
 const router = Router()
 
-router.post('/', requireAuth, validate(CreateClipSchema), clipController.create)
+router.post('/', strictRateLimiter, requireAuth, validate(CreateClipSchema), clipController.create)
 router.get('/', requireAuth, validate(GetClipsQuerySchema, 'query'), clipController.getAll)
 router.get('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), clipController.getById)
 router.patch('/:id', requireAuth, validate(ClipIdParamSchema, 'params'), validate(UpdateClipSchema), clipController.update)
