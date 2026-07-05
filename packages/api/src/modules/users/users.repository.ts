@@ -1,6 +1,9 @@
-import { UserProfileModel, ClipModel, HighlightModel } from '@inkmark/shared'
+import { UserProfileModel, UserSummaryModel, ClipModel, HighlightModel } from '@inkmark/shared'
 import prisma from '@/lib/prisma'
 import { handlePrismaError } from '@/lib/prisma-error'
+
+// viewerFollows is derived in the service layer, not stored — the DB row lacks it.
+type UserProfileRow = Omit<UserProfileModel, 'viewerFollows'>
 
 const USER_PROFILE_SELECT = {
   id: true,
@@ -11,8 +14,15 @@ const USER_PROFILE_SELECT = {
   createdAt: true,
 } as const
 
+const USER_SUMMARY_SELECT = {
+  id: true,
+  username: true,
+  displayName: true,
+  avatarUrl: true,
+} as const
+
 export const usersRepository = {
-  async findByUsername(username: string): Promise<UserProfileModel | null> {
+  async findByUsername(username: string): Promise<UserProfileRow | null> {
     try {
       return await prisma.user.findFirst({
         where: { username, deletedAt: null },
@@ -76,7 +86,7 @@ export const usersRepository = {
     }
   },
 
-  async searchUsers(query: string): Promise<UserProfileModel[]> {
+  async searchUsers(query: string): Promise<UserSummaryModel[]> {
     try {
       return await prisma.user.findMany({
         where: {
@@ -86,7 +96,7 @@ export const usersRepository = {
             { displayName: { contains: query, mode: 'insensitive' } },
           ],
         },
-        select: USER_PROFILE_SELECT,
+        select: USER_SUMMARY_SELECT,
         take: 20,
       })
     } catch (err) {

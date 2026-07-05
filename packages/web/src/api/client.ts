@@ -4,6 +4,7 @@
  */
 import type {
   ClipModel,
+  ClipSource,
   ClipTagModel,
   FeedClipModel,
   FeedHighlightModel,
@@ -248,6 +249,74 @@ export async function fetchClipById(
   return parseResponse<ClipModel>(res);
 }
 
+export interface CreateClipBody {
+  url?: string;
+  title?: string;
+  tags?: string[];
+}
+
+/** `POST /clips` — creates a clip from the web app (server derives domain + OG metadata). */
+export async function createClip(
+  token: string,
+  body: CreateClipBody,
+): Promise<ClipModel> {
+  const res = await fetch(`${getApiBase()}/clips`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    // `WEB` is the ClipSource for clips created from the web app; checked at compile time.
+    body: JSON.stringify({ ...body, source: "WEB" satisfies ClipSource }),
+  });
+  return parseResponse<ClipModel>(res);
+}
+
+export interface UpdateClipBody {
+  title?: string;
+  isPublic?: boolean;
+}
+
+/** `PATCH /clips/:id` — owner-only; update title and/or visibility. */
+export async function updateClip(
+  token: string,
+  clipId: string,
+  body: UpdateClipBody,
+): Promise<ClipModel> {
+  const res = await fetch(
+    `${getApiBase()}/clips/${encodeURIComponent(clipId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    },
+  );
+  return parseResponse<ClipModel>(res);
+}
+
+/** `DELETE /clips/:id` — owner-only soft delete (204 on success). */
+export async function deleteClip(token: string, clipId: string): Promise<void> {
+  const res = await fetch(
+    `${getApiBase()}/clips/${encodeURIComponent(clipId)}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (res.status === 204) return;
+  let message = `HTTP ${res.status}`;
+  try {
+    const json = (await res.json()) as ErrorBody;
+    if (!json.success) message = json.error.message;
+  } catch {
+    /* ignore */
+  }
+  throw new ApiError(message, "UNKNOWN");
+}
+
 export async function addTagToClip(
   token: string,
   clipId: string,
@@ -383,6 +452,101 @@ export async function fetchFollowCounts(
     throw new ApiError(err.message, err.code);
   }
   return { followerCount: jsonF.meta.total, followingCount: jsonG.meta.total };
+}
+
+/** `POST /follows/:userId` — follow a user (idempotent-ish; 409 if already following). */
+export async function followUser(token: string, userId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/follows/${encodeURIComponent(userId)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.ok) return;
+  let message = `HTTP ${res.status}`;
+  let code = "UNKNOWN";
+  try {
+    const json = (await res.json()) as ErrorBody;
+    if (!json.success) {
+      message = json.error.message;
+      code = json.error.code;
+    }
+  } catch {
+    /* ignore */
+  }
+  throw new ApiError(message, code);
+}
+
+/** `DELETE /follows/:userId` — unfollow a user (204 on success). */
+export async function unfollowUser(token: string, userId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/follows/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 204 || res.ok) return;
+  let message = `HTTP ${res.status}`;
+  let code = "UNKNOWN";
+  try {
+    const json = (await res.json()) as ErrorBody;
+    if (!json.success) {
+      message = json.error.message;
+      code = json.error.code;
+    }
+  } catch {
+    /* ignore */
+  }
+  throw new ApiError(message, code);
+}
+
+/** `GET /users/search?q=` — find users by username or display name. */
+export async function searchUsers(
+  token: string,
+  q: string,
+): Promise<UserSummaryModel[]> {
+  const res = await fetch(
+    `${getApiBase()}/users/search?q=${encodeURIComponent(q)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return parseResponse<UserSummaryModel[]>(res);
+}
+
+async function fetchFollowList(
+  token: string,
+  userId: string,
+  kind: "followers" | "following",
+  page: number,
+  limit: number,
+): Promise<{ users: UserSummaryModel[]; meta: PaginationMeta }> {
+  const res = await fetch(
+    `${getApiBase()}/follows/${encodeURIComponent(userId)}/${kind}?page=${page}&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  const json = (await res.json()) as
+    | { success: true; data: UserSummaryModel[]; meta: PaginationMeta }
+    | ErrorBody;
+  if (!res.ok || !json.success) {
+    const err = !json.success
+      ? json.error
+      : { code: "UNKNOWN", message: `HTTP ${res.status}` };
+    throw new ApiError(err.message, err.code);
+  }
+  return { users: json.data, meta: json.meta };
+}
+
+export async function fetchFollowers(
+  token: string,
+  userId: string,
+  page = 1,
+  limit = 30,
+): Promise<{ users: UserSummaryModel[]; meta: PaginationMeta }> {
+  return fetchFollowList(token, userId, "followers", page, limit);
+}
+
+export async function fetchFollowing(
+  token: string,
+  userId: string,
+  page = 1,
+  limit = 30,
+): Promise<{ users: UserSummaryModel[]; meta: PaginationMeta }> {
+  return fetchFollowList(token, userId, "following", page, limit);
 }
 
 export type SearchResult =

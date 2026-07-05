@@ -6,10 +6,13 @@ import {
   fetchFollowCounts,
   fetchPublicClips,
   fetchPublicProfile,
+  followUser,
+  unfollowUser,
 } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { AvatarImg } from '../components/AvatarImg'
 import { ClipGridCard } from '../components/ClipGridCard'
+import { FollowListModal } from '../components/FollowListModal'
 
 export function ProfilePage(): React.ReactElement {
   const { username } = useParams<{ username: string }>()
@@ -22,6 +25,8 @@ export function ProfilePage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [followBusy, setFollowBusy] = useState(false)
+  const [followList, setFollowList] = useState<'followers' | 'following' | null>(null)
 
   const safeUsername = username?.trim() ?? ''
 
@@ -88,6 +93,26 @@ export function ProfilePage(): React.ReactElement {
     }
   }
 
+  const onToggleFollow = async (): Promise<void> => {
+    if (!token || !profile || followBusy) return
+    const wasFollowing = profile.viewerFollows
+    setFollowBusy(true)
+    setError(null)
+    // Optimistic — flip state and adjust the follower count, reconcile on error.
+    setProfile((p) => (p ? { ...p, viewerFollows: !wasFollowing } : p))
+    setFollowerCount((n) => (n === null ? n : n + (wasFollowing ? -1 : 1)))
+    try {
+      if (wasFollowing) await unfollowUser(token, profile.id)
+      else await followUser(token, profile.id)
+    } catch (e) {
+      setProfile((p) => (p ? { ...p, viewerFollows: wasFollowing } : p))
+      setFollowerCount((n) => (n === null ? n : n + (wasFollowing ? 1 : -1)))
+      setError(e instanceof ApiError ? e.message : 'Failed to update follow')
+    } finally {
+      setFollowBusy(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="page-narrow app-boot">
@@ -135,14 +160,22 @@ export function ProfilePage(): React.ReactElement {
 
         {followerCount !== null && followingCount !== null ? (
           <div className="profile-stats" aria-label="Follow stats">
-            <div className="profile-stat">
+            <button
+              type="button"
+              className="profile-stat profile-stat--button"
+              onClick={() => setFollowList('followers')}
+            >
               <span className="profile-stat-num">{followerCount}</span>
               <span className="profile-stat-label">followers</span>
-            </div>
-            <div className="profile-stat">
+            </button>
+            <button
+              type="button"
+              className="profile-stat profile-stat--button"
+              onClick={() => setFollowList('following')}
+            >
               <span className="profile-stat-num">{followingCount}</span>
               <span className="profile-stat-label">following</span>
-            </div>
+            </button>
           </div>
         ) : null}
 
@@ -155,8 +188,21 @@ export function ProfilePage(): React.ReactElement {
               Sign out
             </button>
           </p>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            className={`btn profile-follow-btn ${profile.viewerFollows ? 'btn--secondary' : 'btn--primary'}`}
+            onClick={() => void onToggleFollow()}
+            disabled={followBusy}
+          >
+            {profile.viewerFollows ? 'Following' : 'Follow'}
+          </button>
+        )}
       </header>
+
+      {followList ? (
+        <FollowListModal userId={profile.id} kind={followList} onClose={() => setFollowList(null)} />
+      ) : null}
 
       <section className="profile-clips" aria-label="Public clips">
         <h2 className="section-rule-heading">Clips</h2>

@@ -16,6 +16,8 @@ export interface UserProfileModel {
   avatarUrl: string | null
   bio: string | null
   createdAt: Date
+  // Whether the authenticated viewer follows this user (false when viewing own profile)
+  viewerFollows: boolean
 }
 
 // Minimal public user info for social contexts (follower lists, feed, etc.)

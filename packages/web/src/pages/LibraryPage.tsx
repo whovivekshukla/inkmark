@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import type { ClipModel, PaginationMeta, TagWithCountModel } from '@inkmark/shared'
 import { ApiError, fetchMyClipsFiltered, fetchTags } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { LibraryClipCard } from '../components/LibraryClipCard'
+import { NewClipModal } from '../components/NewClipModal'
 import {
   buildLibrarySearchParams,
   LIBRARY_CLIPS_PER_PAGE,
@@ -27,6 +28,7 @@ export function LibraryPage(): React.ReactElement {
   const [debouncedQuery, setDebouncedQuery] = useState(init.q)
   const [filterKey, setFilterKey] = useState<LibraryFilterKey>(init.filterKey)
   const [sort, setSort] = useState<LibrarySortKey>(init.sort)
+  const [newClipOpen, setNewClipOpen] = useState(false)
 
   const queryRef = useRef(query)
   const debouncedRef = useRef(debouncedQuery)
@@ -157,6 +159,13 @@ export function LibraryPage(): React.ReactElement {
     setSearchParams(new URLSearchParams(), { replace: true })
   }, [setSearchParams])
 
+  const onClipCreated = useCallback((clip: ClipModel): void => {
+    setNewClipOpen(false)
+    // Prepend so the new clip is immediately visible without a refetch.
+    setClips((prev) => [clip, ...prev.filter((c) => c.id !== clip.id)])
+    setMeta((prev) => (prev ? { ...prev, total: prev.total + 1 } : prev))
+  }, [])
+
   const totalClips = meta?.total ?? clips.length
 
   const libraryBackPath =
@@ -181,10 +190,19 @@ export function LibraryPage(): React.ReactElement {
   return (
     <div className="page-wide library-page">
       <header className="library-page-header">
-        <h1 className="library-page-title">Library</h1>
-        <p className="library-page-sub">
-          {totalClips} clip{totalClips === 1 ? '' : 's'}
-        </p>
+        <div>
+          <h1 className="library-page-title">Library</h1>
+          <p className="library-page-sub">
+            {totalClips} clip{totalClips === 1 ? '' : 's'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn--primary library-new-clip"
+          onClick={() => setNewClipOpen(true)}
+        >
+          + New clip
+        </button>
       </header>
 
       <div className="library-search-wrap">
@@ -263,11 +281,18 @@ export function LibraryPage(): React.ReactElement {
       </div>
 
       {clips.length === 0 ? (
-        <p className="empty-state">
-          {!debouncedQuery && filterKey === 'all'
-            ? 'No clips yet. Save something from the extension when it ships—or create clips via the API.'
-            : 'No clips match your search or filters.'}
-        </p>
+        !debouncedQuery && filterKey === 'all' ? (
+          <div className="empty-state library-empty">
+            <p>No clips yet.</p>
+            <p>
+              Hit <button type="button" className="library-empty-link" onClick={() => setNewClipOpen(true)}>+ New clip</button> to
+              save your first URL, install the browser extension, or connect Claude and other AI tools from{' '}
+              <Link to="/settings">Settings</Link>.
+            </p>
+          </div>
+        ) : (
+          <p className="empty-state">No clips match your search or filters.</p>
+        )
       ) : (
         <div className="clip-grid library-clip-grid">
           {clips.map((c) => (
@@ -287,6 +312,10 @@ export function LibraryPage(): React.ReactElement {
             {loadingMore ? 'Loading…' : 'Load more'}
           </button>
         </div>
+      ) : null}
+
+      {newClipOpen ? (
+        <NewClipModal onClose={() => setNewClipOpen(false)} onCreated={onClipCreated} />
       ) : null}
     </div>
   )

@@ -1089,7 +1089,75 @@ body {
 }
 
 .library-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.library-new-clip {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.library-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.library-empty-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Generic modal used by New clip and other dialogs */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-card {
+  width: min(30rem, 100%);
+  max-height: calc(100vh - 2.5rem);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 0.5px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.15rem;
+  color: var(--fg);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.modal-submit {
+  width: auto;
 }
 
 .library-page-title {
@@ -2210,6 +2278,113 @@ body {
   color: var(--fg);
 }
 
+.clip-detail-title-editbtn {
+  margin-left: 0.6rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.clip-detail-title-editbtn:hover {
+  color: var(--accent);
+}
+
+.clip-detail-title-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.clip-detail-title-input {
+  width: 100%;
+  font-size: 18px;
+}
+
+.clip-detail-title-edit-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.clip-detail-title-save {
+  width: auto;
+}
+
+.clip-detail-manage-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.clip-detail-manage-state {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.clip-detail-manage-hint {
+  margin: 0.2rem 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.clip-detail-manage-toggle {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 12.5px;
+}
+
+.clip-detail-manage-confirm,
+.clip-detail-manage-delete-link {
+  margin-top: 1rem;
+}
+
+.clip-detail-manage-confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.clip-detail-manage-delete {
+  width: auto;
+  padding: 0.4rem 0.9rem;
+  font-size: 12.5px;
+}
+
+.clip-detail-manage-delete-link {
+  display: inline-block;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--error-text);
+  cursor: pointer;
+}
+
+.clip-detail-manage-delete-link:hover {
+  text-decoration: underline;
+}
+
+.btn--danger {
+  background: var(--error-text);
+  color: var(--on-accent);
+  border-color: var(--error-text);
+}
+
+.btn--danger:hover {
+  filter: brightness(0.94);
+}
+
 .clip-detail-desc {
   font-family: var(--font-sans);
   font-size: 13.5px;
@@ -2655,6 +2830,113 @@ body {
   gap: 0.15rem;
 }
 
+.profile-stat--button {
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-stat--button:hover .profile-stat-num {
+  color: var(--accent);
+}
+
+.profile-follow-btn {
+  width: auto;
+  margin-top: 1.5rem;
+  padding: 0.5rem 1.5rem;
+}
+
+/* Follower/following/people lists */
+.follow-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.follow-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.follow-list-row:hover {
+  background: var(--accent-muted);
+}
+
+.follow-list-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.follow-list-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.follow-list-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.follow-list-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.follow-list-handle {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+/* Search mode tabs */
+.search-mode-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.search-mode-tab {
+  padding: 0.4rem 0.9rem;
+  border: 0.5px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.search-mode-tab--active {
+  color: var(--fg);
+  border-color: var(--fg-secondary);
+  background: var(--accent-muted);
+}
+
 .profile-stat-num {
   font-family: var(--font-sans);
   font-size: 1.125rem;
@@ -2857,6 +3139,42 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* Connect your tools — copy-paste onboarding blocks */
+.settings-connect-note {
+  margin: 0 0 1rem;
+}
+
+.settings-connect-block {
+  margin-top: 1.5rem;
+}
+
+.settings-connect-subhead {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0 0 0.4rem;
+}
+
+.copy-block {
+  position: relative;
+}
+
+.copy-block-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.5rem;
+  z-index: 1;
+  padding: 0.3rem 0.7rem;
+  font-size: 12px;
+}
+
+.copy-block-pre {
+  white-space: pre;
+  word-break: normal;
+  padding-right: 4.5rem;
 }
 
 .settings-pat-reveal-actions .btn--secondary {

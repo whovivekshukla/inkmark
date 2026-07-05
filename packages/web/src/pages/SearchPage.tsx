@@ -1,9 +1,12 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import type { ClipModel, HighlightModel } from '@inkmark/shared'
-import { ApiError, searchInkmark } from '../api/client'
+import type { ClipModel, HighlightModel, UserSummaryModel } from '@inkmark/shared'
+import { ApiError, searchInkmark, searchUsers } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { AvatarImg } from '../components/AvatarImg'
 import { ClipGridCard } from '../components/ClipGridCard'
+
+type SearchMode = 'content' | 'people'
 
 export function SearchPage(): React.ReactElement {
   const { token } = useAuth()
@@ -12,11 +15,13 @@ export function SearchPage(): React.ReactElement {
   const [q, setQ] = useState(() => searchParams.get('q') ?? '')
   const [clips, setClips] = useState<ClipModel[]>([])
   const [highlights, setHighlights] = useState<HighlightModel[]>([])
+  const [people, setPeople] = useState<UserSummaryModel[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const searchSeqRef = useRef(0)
 
   const qKey = (searchParams.get('q') ?? '').trim()
+  const mode: SearchMode = searchParams.get('mode') === 'people' ? 'people' : 'content'
 
   const searchBackPath = useMemo(() => {
     const s = searchParams.toString()
@@ -29,23 +34,30 @@ export function SearchPage(): React.ReactElement {
   }, [searchParams])
 
   const runSearch = useCallback(
-    async (query: string): Promise<void> => {
+    async (query: string, searchMode: SearchMode): Promise<void> => {
       if (!token) return
       const seq = searchSeqRef.current + 1
       searchSeqRef.current = seq
       setLoading(true)
       setError(null)
       try {
-        const result = await searchInkmark(token, query, 'all')
-        if (seq !== searchSeqRef.current) return
-        if (result.kind === 'all') {
-          setClips(result.clips)
-          setHighlights(result.highlights)
+        if (searchMode === 'people') {
+          const users = await searchUsers(token, query)
+          if (seq !== searchSeqRef.current) return
+          setPeople(users)
+        } else {
+          const result = await searchInkmark(token, query, 'all')
+          if (seq !== searchSeqRef.current) return
+          if (result.kind === 'all') {
+            setClips(result.clips)
+            setHighlights(result.highlights)
+          }
         }
       } catch (e) {
         if (seq !== searchSeqRef.current) return
         setClips([])
         setHighlights([])
+        setPeople([])
         setError(e instanceof ApiError ? e.message : 'Search failed')
       } finally {
         if (seq === searchSeqRef.current) setLoading(false)
@@ -60,21 +72,35 @@ export function SearchPage(): React.ReactElement {
       searchSeqRef.current += 1
       setClips([])
       setHighlights([])
+      setPeople([])
       setError(null)
       setLoading(false)
       return
     }
-    void runSearch(qKey)
-  }, [token, qKey, runSearch])
+    void runSearch(qKey, mode)
+  }, [token, qKey, mode, runSearch])
 
   const onSubmit = (e: FormEvent): void => {
     e.preventDefault()
     const query = q.trim()
     if (!query) {
-      setSearchParams(new URLSearchParams(), { replace: true })
+      const next = new URLSearchParams()
+      if (mode === 'people') next.set('mode', 'people')
+      setSearchParams(next, { replace: true })
       return
     }
-    setSearchParams(new URLSearchParams({ q: query }), { replace: true })
+    const next = new URLSearchParams({ q: query })
+    if (mode === 'people') next.set('mode', 'people')
+    setSearchParams(next, { replace: true })
+  }
+
+  const switchMode = (next: SearchMode): void => {
+    if (next === mode) return
+    const params = new URLSearchParams()
+    const current = q.trim()
+    if (current) params.set('q', current)
+    if (next === 'people') params.set('mode', 'people')
+    setSearchParams(params, { replace: true })
   }
 
   return (
@@ -83,16 +109,37 @@ export function SearchPage(): React.ReactElement {
         <h1 className="page-title">Search</h1>
       </header>
 
+      <div className="search-mode-tabs" role="tablist" aria-label="Search mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'content'}
+          className={`search-mode-tab${mode === 'content' ? ' search-mode-tab--active' : ''}`}
+          onClick={() => switchMode('content')}
+        >
+          Clips &amp; highlights
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'people'}
+          className={`search-mode-tab${mode === 'people' ? ' search-mode-tab--active' : ''}`}
+          onClick={() => switchMode('people')}
+        >
+          People
+        </button>
+      </div>
+
       <form className="search-form" onSubmit={onSubmit}>
         <label className="sr-only" htmlFor="search-q">
-          Search clips and highlights
+          {mode === 'people' ? 'Search people' : 'Search clips and highlights'}
         </label>
         <input
           id="search-q"
           className="search-input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search your clips and highlights"
+          placeholder={mode === 'people' ? 'Search people by name or @username' : 'Search your clips and highlights'}
           autoComplete="off"
         />
         <button type="submit" className="btn btn--primary search-submit" disabled={loading}>
@@ -104,7 +151,36 @@ export function SearchPage(): React.ReactElement {
 
       {loading && qKey ? <p className="app-boot-text">Searching</p> : null}
 
-      {!loading && qKey ? (
+      {!loading && qKey && mode === 'people' ? (
+        <section className="search-section" aria-label="People">
+          <h2 className="section-rule-heading">People</h2>
+          {people.length === 0 ? (
+            <p className="empty-state empty-state--inline">No matching people.</p>
+          ) : (
+            <ul className="follow-list">
+              {people.map((u) => (
+                <li key={u.id}>
+                  <Link className="follow-list-row" to={`/${u.username}`}>
+                    {u.avatarUrl ? (
+                      <AvatarImg className="follow-list-avatar" src={u.avatarUrl} alt="" width={36} height={36} />
+                    ) : (
+                      <span className="follow-list-avatar follow-list-avatar--placeholder" aria-hidden>
+                        {u.displayName.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="follow-list-text">
+                      <span className="follow-list-name">{u.displayName}</span>
+                      <span className="follow-list-handle">@{u.username}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      {!loading && qKey && mode === 'content' ? (
         <>
           <section className="search-section" aria-label="Clips">
             <h2 className="section-rule-heading">Clips</h2>

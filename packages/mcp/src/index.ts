@@ -26,7 +26,7 @@ const client = new InkmarkApiClient(BASE_URL, TOKEN)
 
 const server = new McpServer({
   name: 'inkmark',
-  version: '0.0.1',
+  version: '0.1.0',
 })
 
 // ─── Formatters ────────────────────────────────────────────────────────────
