@@ -5,6 +5,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import '@/lib/passport' // registers the Google OAuth strategy
 import { errorHandler } from '@/middleware/error'
+import { globalRateLimiter } from '@/middleware/rate-limit'
 import { logger } from '@/lib/logger'
 import { authRouter } from '@/modules/auth'
 import { clipsRouter } from '@/modules/clips'
@@ -18,6 +19,10 @@ import { tagsRouter } from '@/modules/tags'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
+// Behind nginx (packages/nginx/proxy.conf sets X-Forwarded-For). Trust exactly one
+// proxy hop so express-rate-limit keys on the real client IP, not the proxy's.
+app.set('trust proxy', 1)
+
 // Security + parsing middlewares
 app.use(helmet())
 app.use(cors())
@@ -29,8 +34,9 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, data: { status: 'ok' } })
 })
 
-// API v1 router
+// API v1 router — global rate limiter guards the whole surface as a baseline
 const v1Router = express.Router()
+v1Router.use(globalRateLimiter)
 v1Router.use('/auth', authRouter)
 v1Router.use('/clips', clipsRouter)
 v1Router.use('/highlights', highlightsRouter)

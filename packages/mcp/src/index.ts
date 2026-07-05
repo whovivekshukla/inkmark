@@ -141,7 +141,7 @@ server.registerTool(
   'search_clips',
   {
     description:
-      'Full-text search across your saved clips in Inkmark. Returns clips ranked by relevance. Useful for finding articles on a specific topic.',
+      'Keyword search across your saved clips in Inkmark. Matches the query against clip title, description, URL, domain, tag names, and highlight text (case-insensitive), returning the most recent matches first. Useful for finding articles on a specific topic.',
     inputSchema: {
       q: z.string().min(1).describe('Search query'),
       page: z.number().int().min(1).default(1).describe('Page number (default: 1)'),

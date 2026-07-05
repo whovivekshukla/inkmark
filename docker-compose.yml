@@ -25,6 +25,10 @@ services:
       INFISICAL_ENV: ${INFISICAL_ENV:-dev}
     restart: unless-stopped
     deploy:
+      # Must stay at a single replica: OAuth exchange codes are held in-process
+      # (see packages/api/src/modules/auth/auth.service.ts). Scaling out requires
+      # moving those codes to shared storage first (Phase 3, task 3.6).
+      replicas: 1
       resources:
         limits:
           cpus: '0.5'

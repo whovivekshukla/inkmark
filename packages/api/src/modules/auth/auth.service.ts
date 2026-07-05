@@ -13,6 +13,15 @@ import { auditLogService } from '@/modules/audit-log'
 import prisma from '@/lib/prisma'
 
 const OAUTH_CODE_TTL_MS = 2 * 60 * 1000
+
+// ⚠️ SINGLE-INSTANCE CONSTRAINT — read before scaling the API horizontally.
+// OAuth exchange codes live in this in-process Map. They are lost on restart and are NOT
+// shared across replicas: if more than one API instance runs behind the proxy, the `POST
+// /auth/exchange` request can land on a different instance than the one that created the
+// code, and the exchange will fail intermittently. This is acceptable for launch (a single
+// API container — see docker-compose.yml, which runs one `api` replica). Before scaling out,
+// move these codes to shared storage (an `oauth_codes` DB table or Redis with TTL).
+// Tracked as Phase 3, task 3.6.
 const oauthCodes = new Map<string, { userId: string; expiresAt: number }>()
 
 function pruneExpiredOAuthCodes(): void {
