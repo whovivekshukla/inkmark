@@ -16,4 +16,3 @@ dist
 coverage
 .turbo
 packages/extension
-packages/mcp
