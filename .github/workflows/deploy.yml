@@ -82,6 +82,18 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             latest
 
+      - name: Extract Metadata (MCP)
+        id: meta_mcp
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-mcp
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            latest
+
       - name: Build And Push API Image
         uses: docker/build-push-action@v5
         with:
@@ -101,6 +113,15 @@ jobs:
           labels: ${{ steps.meta_web.outputs.labels }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL || 'http://localhost:3000/api/v1' }}
+
+      - name: Build And Push MCP Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./packages/mcp/Dockerfile
+          push: true
+          tags: ${{ steps.meta_mcp.outputs.tags }}
+          labels: ${{ steps.meta_mcp.outputs.labels }}
 
   deploy:
     name: Deploy
@@ -132,6 +153,7 @@ jobs:
             # Pull latest images
             docker pull ghcr.io/${{ github.repository }}-api:latest
             docker pull ghcr.io/${{ github.repository }}-web:latest
+            docker pull ghcr.io/${{ github.repository }}-mcp:latest
 
             # Restart containers
             docker compose pull && docker compose up -d

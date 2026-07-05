@@ -136,6 +136,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.27.1(zod@3.25.76)
+      express:
+        specifier: ^4.18.3
+        version: 4.22.1
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -143,6 +146,9 @@ importers:
       '@inkmark/shared':
         specifier: workspace:*
         version: link:../shared
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.25
       '@types/node':
         specifier: ^20.11.30
         version: 20.19.37

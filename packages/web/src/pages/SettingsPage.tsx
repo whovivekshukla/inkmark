@@ -4,7 +4,6 @@ import type { PersonalAccessTokenCreatedModel, PersonalAccessTokenModel } from '
 import {
   ApiError,
   createPersonalAccessToken,
-  getApiBase,
   isSessionJwt,
   listPersonalAccessTokens,
   revokePersonalAccessToken,
@@ -12,45 +11,9 @@ import {
 } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { CopyBlock } from '../components/CopyBlock'
+import { mcpUrl, mcpUrlConfig, TOKEN_PLACEHOLDER } from '../lib/connectSnippets'
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/
-
-// The MCP server expects the API host without the `/api/v1` suffix (it appends that itself).
-function mcpApiHost(): string {
-  return getApiBase().replace(/\/api\/v1\/?$/, '')
-}
-
-const TOKEN_PLACEHOLDER = 'ink_your_token_here'
-
-function claudeDesktopConfig(apiUrl: string, token: string): string {
-  return JSON.stringify(
-    {
-      mcpServers: {
-        inkmark: {
-          command: 'npx',
-          args: ['-y', '@inkmark/mcp'],
-          env: {
-            INKMARK_API_URL: apiUrl,
-            INKMARK_API_TOKEN: token,
-            INKMARK_MCP_SOURCE: 'CLAUDE',
-          },
-        },
-      },
-    },
-    null,
-    2,
-  )
-}
-
-function claudeCodeCommand(apiUrl: string, token: string): string {
-  return [
-    'claude mcp add inkmark \\',
-    `  --env INKMARK_API_URL=${apiUrl} \\`,
-    `  --env INKMARK_API_TOKEN=${token} \\`,
-    '  --env INKMARK_MCP_SOURCE=CLAUDE \\',
-    '  -- npx -y @inkmark/mcp',
-  ].join('\n')
-}
 
 function formatTokenDate(iso: Date | string | null): string {
   if (!iso) return '—'
@@ -380,7 +343,8 @@ export function SettingsPage(): ReactElement {
         </h2>
         <p className="settings-lede">
           Clip and highlight from Claude and other AI hosts using the Inkmark MCP server. You’ll need a personal access
-          token from the section above.
+          token from the section above. For the browser extension, Codex, and API examples, see the full{' '}
+          <Link to="/connect">setup guide</Link>.
         </p>
 
         {newlyCreated ? (
@@ -394,23 +358,15 @@ export function SettingsPage(): ReactElement {
         )}
 
         <div className="settings-connect-block">
-          <h3 className="settings-connect-subhead">Claude Desktop</h3>
+          <h3 className="settings-connect-subhead">Remote MCP</h3>
           <p className="settings-hint">
-            Add this to <code>claude_desktop_config.json</code> (on macOS:{' '}
-            <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>), then restart Claude Desktop.
+            Add this to your host’s MCP config. Hosts without native remote support can bridge with{' '}
+            <code>mcp-remote</code> — see the <Link to="/connect">setup guide</Link> for that and
+            Claude Code.
           </p>
           <CopyBlock
-            ariaLabel="Claude Desktop config"
-            text={claudeDesktopConfig(mcpApiHost(), newlyCreated?.token ?? TOKEN_PLACEHOLDER)}
-          />
-        </div>
-
-        <div className="settings-connect-block">
-          <h3 className="settings-connect-subhead">Claude Code</h3>
-          <p className="settings-hint">Run this one-liner in your terminal:</p>
-          <CopyBlock
-            ariaLabel="Claude Code command"
-            text={claudeCodeCommand(mcpApiHost(), newlyCreated?.token ?? TOKEN_PLACEHOLDER)}
+            ariaLabel="Remote MCP config"
+            text={mcpUrlConfig(mcpUrl(), newlyCreated?.token ?? TOKEN_PLACEHOLDER)}
           />
         </div>
 

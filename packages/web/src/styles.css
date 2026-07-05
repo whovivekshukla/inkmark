@@ -1117,6 +1117,152 @@ body {
   text-decoration: underline;
 }
 
+/* Onboarding nudge toward the Connect hub */
+.connect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.connect-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 12rem;
+  flex: 1 1 16rem;
+}
+
+.connect-banner-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.connect-banner-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--fg-muted);
+}
+
+.connect-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.connect-banner-cta {
+  width: auto;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.connect-banner-dismiss {
+  background: none;
+  border: none;
+  padding: 0.2rem 0.4rem;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.connect-banner-dismiss:hover {
+  color: var(--fg);
+}
+
+/* Connect hub — constrained reading column of outcome cards */
+.page-wide.connect-page {
+  max-width: 760px;
+  padding-bottom: 4rem;
+}
+
+.connect-intro {
+  margin-bottom: 2rem;
+}
+
+.connect-card {
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.connect-card--token {
+  border-color: var(--border-med);
+}
+
+.connect-card-head {
+  margin-bottom: 1.1rem;
+}
+
+.connect-card-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.connect-card-desc {
+  margin: 0.45rem 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+.connect-card-desc code,
+.connect-host-hint code {
+  font-size: 0.85em;
+}
+
+.connect-host + .connect-host {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.5px solid var(--border);
+}
+
+.connect-host-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 0.2rem;
+}
+
+.connect-host-hint {
+  margin: 0 0 0.6rem;
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+.connect-note {
+  margin: 0 0 1rem;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.connect-steps {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 14px;
+  color: var(--fg-secondary);
+  line-height: 1.7;
+}
+
 /* Generic modal used by New clip and other dialogs */
 .modal-backdrop {
   position: fixed;
