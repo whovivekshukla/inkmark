@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthContext'
 import { AppShell } from './layout/AppShell'
 import { RequireAuth } from './layout/RequireAuth'
 import { ClipDetailPage } from './pages/ClipDetailPage'
+import { ConnectPage } from './pages/ConnectPage'
 import { FeedPage } from './pages/FeedPage'
 import { LandingPage } from './pages/LandingPage'
 import { LibraryPage } from './pages/LibraryPage'
@@ -40,6 +41,7 @@ export function App(): React.ReactElement {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/highlights" element={<Navigate to="/feed" replace />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/connect" element={<ConnectPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/clips/:clipId" element={<ClipDetailPage />} />
           <Route path="/:username" element={<ProfilePage />} />

@@ -18,6 +18,12 @@ const rateLimitHandler: Options['handler'] = (_req, res) => {
   })
 }
 
+// Keys are per-IP (express-rate-limit's default: req.ip, with `trust proxy` set).
+// Keying must never derive from unauthenticated client-supplied data (e.g. the raw
+// Authorization header) — that would let callers mint a fresh bucket per request.
+// The hosted MCP server forwards each end-client's IP via X-Forwarded-For, so its
+// users don't share the MCP container's bucket.
+
 // Generous baseline limiter for the entire /api/v1 surface.
 export const globalRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOW_MS,

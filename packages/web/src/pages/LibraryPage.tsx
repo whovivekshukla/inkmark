@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import type { ClipModel, PaginationMeta, TagWithCountModel } from '@inkmark/shared'
 import { ApiError, fetchMyClipsFiltered, fetchTags } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { ConnectBanner } from '../components/ConnectBanner'
 import { LibraryClipCard } from '../components/LibraryClipCard'
 import { NewClipModal } from '../components/NewClipModal'
 import {
@@ -204,6 +205,9 @@ export function LibraryPage(): React.ReactElement {
           + New clip
         </button>
       </header>
+
+      {/* meta.total reflects active filters, so only treat it as library size when unfiltered. */}
+      {!hasActiveFilters && <ConnectBanner totalClips={totalClips} />}
 
       <div className="library-search-wrap">
         <span className="library-search-icon" aria-hidden>

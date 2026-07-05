@@ -8,6 +8,7 @@ services:
     depends_on:
       - api
       - web
+      - mcp
     restart: unless-stopped
 
   api:
@@ -33,6 +34,26 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+
+  mcp:
+    # For prod (VPS): use image from GHCR
+    # For local dev: uncomment build: and comment image:
+    image: ghcr.io/whovivekshukla/inkmark-mcp:latest
+    # build:
+    #   context: .
+    #   dockerfile: packages/mcp/Dockerfile
+    environment:
+      # Talk to the API over the internal compose network — no round-trip through nginx.
+      INKMARK_API_URL: ${INKMARK_MCP_API_URL:-http://api:3000}
+      INKMARK_MCP_PORT: 3001
+    depends_on:
+      - api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   web:
     # For prod (VPS): use image from GHCR

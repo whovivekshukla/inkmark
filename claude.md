@@ -12,7 +12,7 @@ Inkmark is a social reading app: users clip articles/URLs, highlight text, and f
 - API: Express 4, Prisma 5 + PostgreSQL, Zod, Winston
 - Auth: Google OAuth 2.0 → JWT (stateless) + Personal Access Tokens for programmatic clients
 - Web: React 18 + Vite + react-router
-- MCP: `@modelcontextprotocol/sdk` (stdio server)
+- MCP: `@modelcontextprotocol/sdk` (stdio + streamable-HTTP servers)
 - Deploy: Docker images on GHCR behind nginx; secrets via Infisical
 
 ## Packages
@@ -93,7 +93,7 @@ Routes are wired in `src/index.ts` under a single `/api/v1` router. The global e
 
 ### MCP server
 
-`packages/mcp` is a stdio MCP server that exposes Inkmark to AI hosts (Claude Desktop, etc.). It talks **only** to the REST API via `InkmarkApiClient`. Configured via env: `INKMARK_API_URL`, `INKMARK_API_TOKEN` (a PAT, required), `INKMARK_MCP_SOURCE` (tags clips with the originating AI surface).
+`packages/mcp` exposes Inkmark to AI hosts (Claude Desktop, etc.) via two entrypoints that share one tool set (`src/tools.ts`): `src/index.ts` (stdio, launched locally via `npx`) and `src/http.ts` (stateless streamable HTTP, hosted at `/mcp`). Both talk **only** to the REST API via `InkmarkApiClient` — never the DB. stdio auth is the `INKMARK_API_TOKEN` env var (a PAT); HTTP auth is a per-request `Authorization: Bearer <PAT>`. Other config: `INKMARK_API_URL`, `INKMARK_MCP_SOURCE` (tags clips with the originating AI surface; over HTTP use `?source=`).
 
 ## Project rules (read these — they are enforced)
 

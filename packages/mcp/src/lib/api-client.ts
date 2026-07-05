@@ -22,6 +22,10 @@ export class InkmarkApiClient {
   constructor(
     private readonly baseUrl: string,
     private readonly token: string,
+    // End-client IP, forwarded so the API rate-limits per user instead of lumping
+    // all hosted-MCP traffic into the MCP container's bucket. The API only honors
+    // it when the request arrives from a trusted hop (`trust proxy`).
+    private readonly forwardedFor?: string,
   ) {}
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -29,6 +33,7 @@ export class InkmarkApiClient {
       method,
       headers: {
         Authorization: `Bearer ${this.token}`,
+        ...(this.forwardedFor ? { 'X-Forwarded-For': this.forwardedFor } : {}),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
