@@ -1,25 +1,49 @@
 {
   "name": "@inkmark/mcp",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "MCP server for Inkmark — clip URLs, save highlights, and search your reading library from Claude and other AI hosts.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "inkmark",
+    "claude",
+    "bookmarks",
+    "reading",
+    "highlights"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whovivekshukla/inkmark.git",
+    "directory": "packages/mcp"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
     "inkmark-mcp": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@inkmark/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@inkmark/shared": "workspace:*",
     "@types/node": "^20.11.30",
-    "ts-node-dev": "^2.0.0",
+    "tsup": "^8.3.5",
     "tsx": "^4.21.0",
     "typescript": "*"
   }

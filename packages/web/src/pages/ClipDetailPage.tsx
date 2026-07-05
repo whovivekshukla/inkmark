@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { ClipModel, HighlightWithUserModel } from '@inkmark/shared'
 import {
   ApiError,
   addTagToClip,
+  deleteClip,
   deleteHighlight,
   removeTagFromClip,
   fetchClipById,
   fetchHighlightsForClip,
+  updateClip,
 } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { clipBackFromState } from '../lib/clipBackNav'
@@ -45,6 +47,7 @@ function safeExternalUrl(url: string | null): string | null {
 export function ClipDetailPage(): React.ReactElement {
   const { clipId } = useParams<{ clipId: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const { token, user: me } = useAuth()
   const backNav = clipBackFromState(location.state)
 
@@ -61,6 +64,15 @@ export function ClipDetailPage(): React.ReactElement {
   const [tagDraft, setTagDraft] = useState('')
   const tagInputRef = useRef<HTMLInputElement>(null)
   const tagErrorRef = useRef<string | null>(null)
+
+  // Owner-only clip management (edit title, toggle visibility, delete)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [savingTitle, setSavingTitle] = useState(false)
+  const [visibilityBusy, setVisibilityBusy] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deletingClip, setDeletingClip] = useState(false)
+  const [manageError, setManageError] = useState<string | null>(null)
 
   useEffect(() => {
     tagErrorRef.current = tagError
@@ -205,6 +217,63 @@ export function ClipDetailPage(): React.ReactElement {
     [token, clipId, removingTagId],
   )
 
+  const startEditTitle = useCallback(() => {
+    setManageError(null)
+    setTitleDraft(clip?.title ?? '')
+    setEditingTitle(true)
+  }, [clip?.title])
+
+  const onSaveTitle = useCallback(async () => {
+    if (!token || !clipId || savingTitle) return
+    const next = titleDraft.trim()
+    if (!next) {
+      setManageError('Title cannot be empty.')
+      return
+    }
+    setSavingTitle(true)
+    setManageError(null)
+    try {
+      const updated = await updateClip(token, clipId, { title: next })
+      setClip((c) => (c ? { ...c, title: updated.title } : c))
+      setEditingTitle(false)
+    } catch (e) {
+      setManageError(e instanceof ApiError ? e.message : 'Failed to update title')
+    } finally {
+      setSavingTitle(false)
+    }
+  }, [token, clipId, savingTitle, titleDraft])
+
+  const onToggleVisibility = useCallback(async () => {
+    if (!token || !clipId || visibilityBusy || !clip) return
+    const nextPublic = !clip.isPublic
+    setVisibilityBusy(true)
+    setManageError(null)
+    // Optimistic — reconcile from the server response.
+    setClip((c) => (c ? { ...c, isPublic: nextPublic } : c))
+    try {
+      const updated = await updateClip(token, clipId, { isPublic: nextPublic })
+      setClip((c) => (c ? { ...c, isPublic: updated.isPublic } : c))
+    } catch (e) {
+      setClip((c) => (c ? { ...c, isPublic: !nextPublic } : c))
+      setManageError(e instanceof ApiError ? e.message : 'Failed to change visibility')
+    } finally {
+      setVisibilityBusy(false)
+    }
+  }, [token, clipId, visibilityBusy, clip])
+
+  const onDeleteClip = useCallback(async () => {
+    if (!token || !clipId || deletingClip) return
+    setDeletingClip(true)
+    setManageError(null)
+    try {
+      await deleteClip(token, clipId)
+      navigate(backNav.to)
+    } catch (e) {
+      setManageError(e instanceof ApiError ? e.message : 'Failed to delete clip')
+      setDeletingClip(false)
+    }
+  }, [token, clipId, deletingClip, navigate, backNav.to])
+
   if (loading) {
     return (
       <div className="page-wide clip-detail-page">
@@ -227,6 +296,7 @@ export function ClipDetailPage(): React.ReactElement {
   const title = clip.title?.trim() || clip.domain || 'Untitled'
   const desc = clip.description?.trim()
   const tags = clip.tags ?? []
+  const isOwner = Boolean(me?.id && me.id === clip.userId)
   const showAlsoLabel = mine.length > 0 && others.length > 0
   const readOriginalUrl = safeExternalUrl(clip.url)
 
@@ -259,7 +329,49 @@ export function ClipDetailPage(): React.ReactElement {
               <span className="clip-detail-domain-label">{domainLabel}</span>
               <SourceBadge source={clip.source} />
             </div>
-            <h1 className="clip-detail-title">{title}</h1>
+            {isOwner && editingTitle ? (
+              <div className="clip-detail-title-edit">
+                <input
+                  type="text"
+                  className="settings-input clip-detail-title-input"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  maxLength={500}
+                  aria-label="Clip title"
+                  autoFocus
+                />
+                <div className="clip-detail-title-edit-actions">
+                  <button
+                    type="button"
+                    className="btn btn--primary clip-detail-title-save"
+                    onClick={() => void onSaveTitle()}
+                    disabled={savingTitle}
+                  >
+                    {savingTitle ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => {
+                      setEditingTitle(false)
+                      setManageError(null)
+                    }}
+                    disabled={savingTitle}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <h1 className="clip-detail-title">
+                {title}
+                {isOwner ? (
+                  <button type="button" className="clip-detail-title-editbtn" onClick={startEditTitle}>
+                    Edit
+                  </button>
+                ) : null}
+              </h1>
+            )}
             {desc ? <p className="clip-detail-desc">{desc}</p> : null}
             <div className="clip-detail-divider" role="presentation" />
           </header>
@@ -311,6 +423,67 @@ export function ClipDetailPage(): React.ReactElement {
               Saved {formatShortRelative(clip.savedAt)} · {domainLabel}
             </p>
           </div>
+
+          {isOwner ? (
+            <div className="clip-detail-card clip-detail-manage">
+              <h2 className="clip-detail-card-label">Manage clip</h2>
+              <div className="clip-detail-manage-row">
+                <div>
+                  <p className="clip-detail-manage-state">{clip.isPublic ? 'Public' : 'Private'}</p>
+                  <p className="clip-detail-manage-hint">
+                    {clip.isPublic
+                      ? 'Visible on your profile and followers’ feeds.'
+                      : 'Only you can see this clip.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--secondary clip-detail-manage-toggle"
+                  onClick={() => void onToggleVisibility()}
+                  disabled={visibilityBusy}
+                >
+                  {clip.isPublic ? 'Make private' : 'Make public'}
+                </button>
+              </div>
+
+              {confirmingDelete ? (
+                <div className="clip-detail-manage-confirm">
+                  <p className="clip-detail-manage-hint">Delete this clip and its highlights?</p>
+                  <div className="clip-detail-manage-confirm-actions">
+                    <button
+                      type="button"
+                      className="btn btn--danger clip-detail-manage-delete"
+                      onClick={() => void onDeleteClip()}
+                      disabled={deletingClip}
+                    >
+                      {deletingClip ? 'Deleting…' : 'Delete'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() => setConfirmingDelete(false)}
+                      disabled={deletingClip}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="clip-detail-manage-delete-link"
+                  onClick={() => {
+                    setManageError(null)
+                    setConfirmingDelete(true)
+                  }}
+                >
+                  Delete clip
+                </button>
+              )}
+
+              {manageError ? <p className="clip-detail-action-error">{manageError}</p> : null}
+            </div>
+          ) : null}
 
           <div className="clip-detail-card">
             <h2 className="clip-detail-card-label">Tags</h2>

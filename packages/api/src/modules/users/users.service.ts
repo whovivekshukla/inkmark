@@ -1,15 +1,25 @@
-import { UserProfileModel, ClipModel, HighlightModel, PaginationMeta, PaginationQuery } from '@inkmark/shared'
+import {
+  UserProfileModel,
+  UserSummaryModel,
+  ClipModel,
+  HighlightModel,
+  PaginationMeta,
+  PaginationQuery,
+} from '@inkmark/shared'
 import { usersRepository } from './users.repository'
+import { followRepository } from '@/modules/follows/follows.repository'
 import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
 import { logger } from '@/lib/logger'
 
 export const usersService = {
-  async getPublicProfile(username: string): Promise<UserProfileModel> {
+  async getPublicProfile(username: string, viewerId: string): Promise<UserProfileModel> {
     try {
       const user = await usersRepository.findByUsername(username)
       if (!user) throw new AppError(ErrorCode.USER_NOT_FOUND, 'User not found', 404)
-      return user
+      const viewerFollows =
+        viewerId !== user.id ? await followRepository.isFollowing(viewerId, user.id) : false
+      return { ...user, viewerFollows }
     } catch (err) {
       if (err instanceof AppError) throw err
       logger.error('usersService.getPublicProfile failed', { username, error: err })
@@ -59,7 +69,7 @@ export const usersService = {
     }
   },
 
-  async searchUsers(query: string): Promise<UserProfileModel[]> {
+  async searchUsers(query: string): Promise<UserSummaryModel[]> {
     try {
       return await usersRepository.searchUsers(query)
     } catch (err) {

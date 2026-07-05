@@ -6,6 +6,7 @@ import { AppError } from '@/lib/errors'
 import { ErrorCode } from '@/constants/error-codes'
 import { AuditAction } from '@/constants/audit-actions'
 import { logger } from '@/lib/logger'
+import { fetchMetadata } from '@/lib/metadata'
 
 function assertOwnership(clip: { userId: string }, userId: string): void {
   if (clip.userId !== userId) {
@@ -27,16 +28,27 @@ export const clipService = {
         }
       }
 
+      // Enrich with server-side OG metadata when the client supplied a bare URL.
+      // Metadata failures must never block clip creation — fetchMetadata never throws.
+      let { title, description, ogImage, faviconUrl } = dto
+      if (url && !title) {
+        const meta = await fetchMetadata(url)
+        title = meta.title ?? title
+        description = description ?? meta.description
+        ogImage = ogImage ?? meta.ogImage
+        faviconUrl = faviconUrl ?? meta.faviconUrl
+      }
+
       const clip = await clipRepository.create({
         userId,
         url,
         domain,
         source: dto.source,
         isPublic: dto.isPublic ?? true,
-        title: dto.title,
-        description: dto.description,
-        ogImage: dto.ogImage,
-        faviconUrl: dto.faviconUrl,
+        title,
+        description,
+        ogImage,
+        faviconUrl,
       })
 
       // Set tags separately — clip must exist before ClipTag rows can be created

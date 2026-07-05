@@ -74,6 +74,18 @@ export const followRepository = {
     }
   },
 
+  async isFollowing(followerId: string, followingId: string): Promise<boolean> {
+    try {
+      const row = await prisma.follow.findUnique({
+        where: { followerId_followingId: { followerId, followingId } },
+        select: { followerId: true },
+      })
+      return row !== null
+    } catch (err) {
+      throw handlePrismaError(err)
+    }
+  },
+
   async getFollowingIds(userId: string): Promise<string[]> {
     try {
       const follows = await prisma.follow.findMany({
