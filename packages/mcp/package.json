@@ -10,7 +10,7 @@
     "dev": "tsx src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@inkmark/shared": "workspace:*",

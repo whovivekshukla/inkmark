@@ -53,10 +53,6 @@ model Clip {
   updatedAt   DateTime   @updatedAt @map("updated_at")
   deletedAt   DateTime?  @map("deleted_at") // soft delete
 
-  // Full-text search vector — populated via PostgreSQL trigger on insert/update.
-  // Using Unsupported because Prisma does not natively manage tsvector columns.
-  searchVector Unsupported("tsvector")? @map("search_vector")
-
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   highlights Highlight[]
   tags       ClipTag[]

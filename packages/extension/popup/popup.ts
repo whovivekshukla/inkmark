@@ -69,7 +69,7 @@ async function init(): Promise<void> {
 // ─── Event listeners ───────────────────────────────────────────────────────
 
 btnLogin.addEventListener('click', () => {
-  chrome.tabs.create({ url: 'https://inkmark.flaplabs.xyz/sign-in' })
+  void chrome.tabs.create({ url: 'https://inkmark.flaplabs.xyz/sign-in' })
   window.close()
 })
 
@@ -124,4 +124,4 @@ btnUnclip.addEventListener('click', async () => {
   }
 })
 
-init()
+void init()

@@ -23,7 +23,7 @@ Inkmark is a social reading app: users clip articles/URLs, highlight text, and f
 | `packages/web` | React SPA frontend (Vite). |
 | `packages/mcp` | MCP server. Calls the REST API via `lib/api-client.ts` — **never touches the DB directly.** |
 | `packages/shared` | Shared TS types/DTOs consumed by all other packages (`@inkmark/shared`). |
-| `packages/extension` | Chrome extension (early/placeholder). |
+| `packages/extension` | Chrome extension (Manifest V3) — clip + highlight from the browser. Talks to the REST API only; API base is build-time configurable. |
 | `packages/nginx` | Reverse-proxy config for deployment. |
 
 ## Commands

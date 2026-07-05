@@ -36,4 +36,7 @@ export enum ErrorCode {
   // Personal Access Tokens
   TOKEN_NOT_FOUND = 'TOKEN_NOT_FOUND',
   TOKEN_LIMIT_EXCEEDED = 'TOKEN_LIMIT_EXCEEDED',
+
+  // Rate limiting
+  RATE_LIMITED = 'RATE_LIMITED', // too many requests within the window (HTTP 429)
 }

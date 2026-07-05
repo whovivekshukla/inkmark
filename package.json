@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "postinstall": "pnpm --filter @inkmark/api generate",
     "dev": "turbo dev",
@@ -13,7 +16,11 @@
   "devDependencies": {
     "typescript": "^5.4.5",
     "turbo": "^2.1.2",
-    "eslint": "^8.57.0",
+    "eslint": "^9.13.0",
+    "@eslint/js": "^9.13.0",
+    "typescript-eslint": "^8.20.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.11.0",
     "prettier": "^3.2.5"
   }
 }

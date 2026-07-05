@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import passport from 'passport'
 import { authController } from './auth.controller'
 import { requireAuth, requireJwt } from '@/middleware/auth'
+import { strictRateLimiter } from '@/middleware/rate-limit'
 import { validate } from '@/middleware/validate'
 import { ExchangeOAuthCodeSchema, UpdateProfileSchema } from './auth.schema'
 import { CreateTokenSchema, TokenIdParamSchema } from './tokens.schema'
@@ -36,7 +37,7 @@ function readCookie(header: string | undefined, name: string): string | undefine
 }
 
 // Redirect to Google OAuth consent screen
-router.get('/google', (req, res, next) => {
+router.get('/google', strictRateLimiter, (req, res, next) => {
   const state = crypto.randomBytes(32).toString('base64url')
   res.cookie(OAUTH_STATE_COOKIE, state, cookieOptions())
   passport.authenticate('google', { scope: ['profile', 'email'], session: false, state })(req, res, next)
@@ -61,7 +62,7 @@ router.get(
   authController.googleCallback,
 )
 
-router.post('/exchange', validate(ExchangeOAuthCodeSchema), authController.exchangeOAuthCode)
+router.post('/exchange', strictRateLimiter, validate(ExchangeOAuthCodeSchema), authController.exchangeOAuthCode)
 
 // Returns the currently authenticated user
 router.get('/me', requireAuth, authController.getMe)
@@ -75,7 +76,7 @@ router.post('/logout', requireAuth, authController.logout)
 // ─── Personal Access Tokens (JWT only — PATs cannot manage other PATs) ───────
 
 // Creates a new PAT; returns raw token once — store it immediately
-router.post('/tokens', requireJwt, validate(CreateTokenSchema), authController.createToken)
+router.post('/tokens', strictRateLimiter, requireJwt, validate(CreateTokenSchema), authController.createToken)
 
 // Lists all PATs for the authenticated user (no raw token in response)
 router.get('/tokens', requireJwt, authController.listTokens)
