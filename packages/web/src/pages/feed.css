@@ -1,0 +1,271 @@
+/* Feed page + timeline re-skin.
+   Co-located to avoid touching the foundation-owned global stylesheet.
+   Imported after styles.css, so equal-specificity rules here win; a few
+   selectors are bumped in specificity (double class) where the legacy
+   rule doesn't yield. Mirrors the look-and-feel established in
+   pages/library.css (chips, mono domains, amber markline). */
+
+.page-wide.feed-page.feed-page {
+  max-width: 760px;
+  padding-bottom: 3rem;
+}
+
+/* ---------- Header ---------- */
+
+.feed-page__header.feed-page__header {
+  margin-bottom: 0.5rem;
+}
+
+.feed-page.feed-page .page-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 2.875rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.feed-page__lede.feed-page__lede {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--fg-muted);
+  margin: 0.5rem 0 0;
+}
+
+/* ---------- Pill tabs (match Library filter chips) ---------- */
+
+.feed-filter-bar.feed-filter-bar {
+  margin-top: 1.5rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  display: block;
+}
+
+.feed-filter-row.feed-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feed-filter-chip.feed-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-med);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.feed-filter-chip.feed-filter-chip:hover {
+  border-color: var(--border-card-hover);
+  color: var(--fg);
+}
+
+.feed-filter-chip--active.feed-filter-chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+.feed-filter-chip--active.feed-filter-chip--active:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- Timeline ---------- */
+
+.feed-timeline.feed-timeline {
+  margin-top: 2rem;
+}
+
+.feed-timeline-item.feed-timeline-item {
+  grid-template-columns: 44px 1fr;
+  column-gap: 1rem;
+  padding-bottom: 1.75rem;
+}
+
+.feed-timeline-item__rail.feed-timeline-item__rail {
+  width: 44px;
+  min-height: 38px;
+}
+
+.feed-timeline-item__stem.feed-timeline-item__stem {
+  width: 1.5px;
+  background: var(--border);
+}
+
+.feed-timeline-item__avatar.feed-timeline-item__avatar {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--bg);
+  background: var(--bg2);
+}
+
+.feed-timeline-item__avatar-placeholder.feed-timeline-item__avatar-placeholder {
+  font-size: 15px;
+}
+
+.feed-timeline-item__meta.feed-timeline-item__meta {
+  margin-bottom: 0.6rem;
+}
+
+.feed-timeline-item__name.feed-timeline-item__name {
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.feed-timeline-item__time.feed-timeline-item__time {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--fg-muted);
+}
+
+/* ---------- Card ---------- */
+
+.feed-clip-card.feed-clip-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: none;
+}
+
+.feed-clip-card.feed-clip-card:hover {
+  border-color: var(--border-card-hover);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .feed-clip-card.feed-clip-card,
+[data-theme='dark'] .feed-clip-card.feed-clip-card:hover {
+  box-shadow: none;
+}
+
+/* Highlight items get a 3px amber spine instead of a top accent bar. */
+.feed-clip-card--accent-amber.feed-clip-card--accent-amber,
+.feed-clip-card--accent-blue.feed-clip-card--accent-blue {
+  border-top: 1px solid var(--border);
+  border-left: 3px solid var(--markline);
+}
+
+.feed-clip-card--accent-blue.feed-clip-card--accent-blue {
+  border-left-color: var(--hl-blue-line);
+}
+
+.feed-clip-card__quote-panel.feed-clip-card__quote-panel {
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.feed-clip-card__quote.feed-clip-card__quote {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--fg);
+  -webkit-line-clamp: 4;
+}
+
+.feed-clip-card__attr.feed-clip-card__attr {
+  margin-top: 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--fg-secondary);
+}
+
+.feed-clip-card__minimal-domain.feed-clip-card__minimal-domain {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--fg-muted);
+}
+
+.feed-clip-card__minimal-title.feed-clip-card__minimal-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.3125rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin-top: 0.5rem;
+}
+
+.feed-clip-card__footer.feed-clip-card__footer {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.feed-clip-card__time.feed-clip-card__time {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.source-badge.source-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-med);
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.feed-clip-card__hl.feed-clip-card__hl {
+  color: var(--amber);
+}
+
+.feed-clip-card__hl-label.feed-clip-card__hl-label {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--amber);
+}
+
+.feed-clip-card__hl-label.feed-clip-card__hl-label::before {
+  content: '• ';
+}
+
+.library-hl-swatch--amber.library-hl-swatch--amber {
+  background: var(--markline);
+}
+
+.library-hl-swatch--blue.library-hl-swatch--blue {
+  background: var(--hl-blue-line);
+}
+
+.feed-load-more.feed-load-more {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-secondary);
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.feed-load-more.feed-load-more:hover:not(:disabled) {
+  color: var(--fg);
+  background: transparent;
+  border-color: transparent;
+}

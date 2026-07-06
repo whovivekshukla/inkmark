@@ -1,0 +1,71 @@
+/* Profile re-skin — co-located to avoid touching the foundation stylesheet.
+   Imported after styles.css so equal-specificity rules here win; a few
+   selectors use double-class specificity where the legacy rule doesn't yield. */
+
+.profile-public.profile-public {
+  max-width: 1180px;
+}
+
+.profile-public-identity.profile-public-identity {
+  gap: 1.25rem;
+}
+
+.profile-public-avatar.profile-public-avatar {
+  width: 76px;
+  height: 76px;
+  border: 1px solid var(--border-med);
+}
+
+.profile-public-avatar--placeholder.profile-public-avatar--placeholder {
+  width: 76px;
+  height: 76px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.75rem;
+  background: var(--avatar);
+  color: var(--avatar-text);
+}
+
+.profile-public-name.profile-public-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.profile-public-handle.profile-public-handle {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg-muted);
+  margin-top: 0.4rem;
+}
+
+.profile-public-bio.profile-public-bio {
+  font-size: 15px;
+  color: var(--fg-secondary);
+}
+
+.profile-stats.profile-stats {
+  gap: 2.25rem;
+  margin-top: 1.5rem;
+}
+
+.profile-stat-num.profile-stat-num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--fg);
+}
+
+.profile-stat-label.profile-stat-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.profile-clips .section-rule-heading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}

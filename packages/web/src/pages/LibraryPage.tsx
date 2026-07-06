@@ -13,6 +13,7 @@ import {
   type LibraryFilterKey,
   type LibrarySortKey,
 } from '../lib/libraryFiltersUrl'
+import './library.css'
 
 export function LibraryPage(): React.ReactElement {
   const { token } = useAuth()
@@ -168,6 +169,9 @@ export function LibraryPage(): React.ReactElement {
   }, [])
 
   const totalClips = meta?.total ?? clips.length
+  // No aggregate highlight total is exposed by the API (only per-clip highlightCount),
+  // so this only reflects highlights on the clips currently loaded into memory.
+  const loadedHighlights = clips.reduce((sum, c) => sum + (c.highlightCount ?? 0), 0)
 
   const libraryBackPath =
     searchParams.toString().length > 0 ? `/library?${searchParams.toString()}` : '/library'
@@ -195,6 +199,9 @@ export function LibraryPage(): React.ReactElement {
           <h1 className="library-page-title">Library</h1>
           <p className="library-page-sub">
             {totalClips} clip{totalClips === 1 ? '' : 's'}
+            {loadedHighlights > 0
+              ? ` · ${loadedHighlights} highlight${loadedHighlights === 1 ? '' : 's'}`
+              : ''}
           </p>
         </div>
         <button

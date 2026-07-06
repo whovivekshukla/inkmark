@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthContext'
 import { AvatarImg } from '../components/AvatarImg'
 import { ClipGridCard } from '../components/ClipGridCard'
 import { FollowListModal } from '../components/FollowListModal'
+import './profile.css'
 
 export function ProfilePage(): React.ReactElement {
   const { username } = useParams<{ username: string }>()
@@ -143,8 +144,8 @@ export function ProfilePage(): React.ReactElement {
               className="profile-public-avatar"
               src={profile.avatarUrl}
               alt=""
-              width={56}
-              height={56}
+              width={76}
+              height={76}
             />
           ) : (
             <div className="profile-public-avatar profile-public-avatar--placeholder" aria-hidden>
@@ -176,6 +177,12 @@ export function ProfilePage(): React.ReactElement {
               <span className="profile-stat-num">{followingCount}</span>
               <span className="profile-stat-label">following</span>
             </button>
+            {clipsMeta?.total !== undefined ? (
+              <div className="profile-stat">
+                <span className="profile-stat-num">{clipsMeta.total}</span>
+                <span className="profile-stat-label">clips</span>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -205,7 +212,7 @@ export function ProfilePage(): React.ReactElement {
       ) : null}
 
       <section className="profile-clips" aria-label="Public clips">
-        <h2 className="section-rule-heading">Clips</h2>
+        <h2 className="section-rule-heading">Public clips</h2>
         {clips.length === 0 ? (
           <p className="empty-state">No public clips yet.</p>
         ) : (

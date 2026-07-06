@@ -1,0 +1,375 @@
+/* Library page + clip card re-skin.
+   Co-located to avoid touching the foundation-owned global stylesheet.
+   Imported after styles.css, so equal-specificity rules here win; a few
+   selectors are bumped in specificity where the legacy rule doesn't yield. */
+
+.library-page.library-page {
+  max-width: 1180px;
+  padding-bottom: 3rem;
+}
+
+/* ---------- Header ---------- */
+
+.library-page-header.library-page-header {
+  align-items: flex-end;
+  margin-bottom: 1.75rem;
+}
+
+.library-page-title.library-page-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 2.875rem;
+  line-height: 1.1;
+  color: var(--fg);
+  margin: 0;
+}
+
+.library-page-sub.library-page-sub {
+  font-family: var(--font-sans);
+  font-size: 0.906rem;
+  color: var(--fg-muted);
+  margin: 0.4rem 0 0;
+}
+
+.library-new-clip.library-new-clip {
+  width: auto;
+}
+
+/* ---------- Search bar (opens the global ⌘K overlay) ---------- */
+
+.library-search-wrap.library-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 56px;
+  margin-bottom: 1.25rem;
+}
+
+.library-search-icon.library-search-icon {
+  position: absolute;
+  left: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+
+.library-search-trigger {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.25rem 0 3rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.library-search-trigger:hover {
+  border-color: var(--border-med);
+}
+
+.library-search-trigger:focus,
+.library-search-trigger:focus-visible {
+  outline: none;
+  border-color: var(--border-med);
+  background: var(--bg-hover);
+}
+
+.library-search-trigger__placeholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-search-trigger__kbd {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--fg-muted);
+  border: 1px solid var(--border-med);
+  border-radius: 6px;
+  padding: 0.15rem 0.4rem;
+}
+
+/* ---------- Filter/sort toolbar ---------- */
+
+.library-toolbar.library-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.library-filters.library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.library-chip.library-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-med);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.library-chip.library-chip:hover {
+  border-color: var(--border-card-hover);
+  color: var(--fg);
+}
+
+.library-chip--active.library-chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.library-chip--active.library-chip--active:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.library-toolbar-controls.library-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.library-sort-select.library-sort-select {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-med);
+  background: var(--surface);
+  color: var(--fg-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 0 2rem 0 0.85rem;
+}
+
+.library-sort-select.library-sort-select:focus-visible {
+  outline: none;
+  border-color: var(--border-card-hover);
+}
+
+.library-clear-filters.library-clear-filters {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+
+.library-clear-filters.library-clear-filters:hover {
+  color: var(--fg);
+}
+
+/* ---------- Card grid ---------- */
+
+.library-clip-grid.library-clip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .library-clip-grid.library-clip-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .library-clip-grid.library-clip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Clip card ---------- */
+
+.library-clip-card.library-clip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-height: 172px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.library-clip-card.library-clip-card:hover {
+  border-color: var(--border-card-hover);
+  transform: translateY(-2px);
+}
+
+.library-clip-card--highlighted.library-clip-card--highlighted {
+  box-shadow: inset 3px 0 0 var(--markline);
+}
+
+.library-clip-card__source.library-clip-card__source {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.library-clip-card__favicon.library-clip-card__favicon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--bg2);
+}
+
+.library-clip-card__favicon--placeholder.library-clip-card__favicon--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg-secondary);
+  border: none;
+}
+
+.library-clip-card__domain.library-clip-card__domain {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fg-muted);
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-clip-card__spacer {
+  flex: 1 1 auto;
+}
+
+.source-badge.source-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-med);
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.library-clip-card__title.library-clip-card__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.219rem;
+  line-height: 1.28;
+  letter-spacing: 0;
+  margin: 0;
+  color: var(--fg);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-clip-card__preview {
+  margin: 0;
+  padding-left: 0.65rem;
+  border-left: 2px solid var(--markline);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--fg-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.library-clip-card__preview mark {
+  background: var(--mark);
+  color: inherit;
+}
+
+.library-clip-card__tags.library-clip-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.library-clip-card__tag.library-clip-card__tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-secondary);
+  background: var(--bg2);
+  border: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+}
+
+.library-clip-card__footer.library-clip-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: auto;
+  padding-top: 0;
+}
+
+.library-clip-card__time.library-clip-card__time {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.library-clip-card__hl.library-clip-card__hl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+.library-clip-card__hl-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--markline);
+  flex-shrink: 0;
+}
+
+.library-clip-card__footer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin-left: auto;
+  min-width: 0;
+}

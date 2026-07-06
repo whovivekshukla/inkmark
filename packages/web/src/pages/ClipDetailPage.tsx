@@ -16,6 +16,8 @@ import { clipBackFromState } from '../lib/clipBackNav'
 import { displayRootDomain } from '../lib/displayRootDomain'
 import { formatShortRelative } from '../lib/formatRelative'
 import { SourceBadge } from '../components/SourceBadge'
+import { CopyBlock } from '../components/CopyBlock'
+import './clip-detail.css'
 
 function navPreview(text: string, max = 60): string {
   if (text.length <= max) return text
@@ -316,13 +318,13 @@ export function ClipDetailPage(): React.ReactElement {
                 <img
                   src={clip.faviconUrl}
                   alt=""
-                  className="library-clip-card__favicon"
-                  width={20}
-                  height={20}
+                  className="clip-detail-favicon"
+                  width={28}
+                  height={28}
                   loading="lazy"
                 />
               ) : (
-                <span className="library-clip-card__favicon library-clip-card__favicon--placeholder" aria-hidden>
+                <span className="clip-detail-favicon clip-detail-favicon--placeholder" aria-hidden>
                   {domainLetter}
                 </span>
               )}
@@ -372,8 +374,15 @@ export function ClipDetailPage(): React.ReactElement {
                 ) : null}
               </h1>
             )}
-            {desc ? <p className="clip-detail-desc">{desc}</p> : null}
-            <div className="clip-detail-divider" role="presentation" />
+            {desc ? (
+              <div className="clip-detail-summary-card">
+                <p className="clip-detail-summary-label">
+                  <span className="clip-detail-amber-dot" aria-hidden />
+                  Summary
+                </p>
+                <p className="clip-detail-desc">{desc}</p>
+              </div>
+            ) : null}
           </header>
 
           <section className="clip-detail-highlights" aria-label="Highlights">
@@ -540,6 +549,15 @@ export function ClipDetailPage(): React.ReactElement {
             {tagError ? <p className="clip-detail-tag-error">{tagError}</p> : null}
           </div>
 
+          <div className="clip-detail-card clip-detail-agent-card">
+            <p className="clip-detail-agent-label">
+              <span className="clip-detail-amber-dot" aria-hidden />
+              Agent-readable
+            </p>
+            <p className="clip-detail-agent-hint">Available to your connected agents over MCP.</p>
+            <CopyBlock text={clip.id} ariaLabel="clip ID" />
+          </div>
+
           {orderedForNav.length > 0 ? (
             <div className="clip-detail-card">
               <h2 className="clip-detail-card-label">
@@ -592,7 +610,9 @@ function HighlightCard({
 
   return (
     <article id={`highlight-${h.id}`} className={`clip-detail-hl-card ${mod}`}>
-      <p className="clip-detail-hl-text">{h.text}</p>
+      <p className="clip-detail-hl-text">
+        <span className="clip-detail-hl-mark">{h.text}</span>
+      </p>
       <div className="clip-detail-hl-footer">
         <span className="clip-detail-hl-meta">
           {who} · {when}

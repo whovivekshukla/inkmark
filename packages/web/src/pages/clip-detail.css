@@ -1,0 +1,618 @@
+/* ─── Clip detail — re-skin ──────────────────────────────────────────────
+   Overrides the legacy .clip-detail-* rules in ../styles.css (bundled first,
+   so equal-specificity selectors here win). New classes introduced by this
+   re-skin (favicon square, summary card, agent-readable card, highlight
+   mark span) live only in this file. */
+
+.page-wide.clip-detail-page {
+  max-width: 1160px;
+}
+
+.clip-detail-back {
+  margin: 0 0 2rem;
+}
+
+.clip-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .clip-detail-layout {
+    grid-template-columns: 1fr 340px;
+    gap: 48px;
+  }
+}
+
+.clip-detail-main {
+  min-width: 0;
+}
+
+.clip-detail-aside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .clip-detail-aside {
+    position: sticky;
+    top: 92px;
+    align-self: start;
+  }
+}
+
+/* ─── Source row ──────────────────────────────────────────────────────── */
+.clip-detail-source {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.clip-detail-favicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.clip-detail-favicon--placeholder {
+  background: var(--bg2);
+  color: var(--fg-secondary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.clip-detail-domain-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+/* ─── Title ───────────────────────────────────────────────────────────── */
+.clip-detail-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 34px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--fg);
+}
+
+.clip-detail-title-editbtn {
+  margin-left: 0.75rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.clip-detail-title-editbtn:hover {
+  color: var(--accent);
+}
+
+.clip-detail-title-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.clip-detail-title-input {
+  width: 100%;
+  font-size: 20px;
+}
+
+.clip-detail-title-edit-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.clip-detail-title-save {
+  width: auto;
+}
+
+/* ─── AI summary card ─────────────────────────────────────────────────── */
+.clip-detail-summary-card {
+  margin-top: 1.25rem;
+  background: var(--amber-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.clip-detail-summary-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.clip-detail-amber-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex-shrink: 0;
+}
+
+.clip-detail-desc {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--fg-secondary);
+  white-space: pre-wrap;
+}
+
+/* ─── Highlights section ──────────────────────────────────────────────── */
+.clip-detail-highlights {
+  margin-top: 2.5rem;
+}
+
+.clip-detail-section-label,
+.clip-detail-subsection-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0 0 1rem;
+}
+
+.clip-detail-subsection-label {
+  margin-top: 1.5rem;
+}
+
+.clip-detail-action-error {
+  margin: 0 0 0.75rem;
+  font-size: 13px;
+  color: var(--error-text);
+}
+
+.clip-detail-empty {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-secondary);
+}
+
+.clip-detail-hl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--markline);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 0.85rem;
+  box-shadow: none;
+  transition: border-color 0.15s ease;
+}
+
+.clip-detail-hl-card:hover {
+  border-color: var(--border-card-hover);
+  border-left-color: var(--markline);
+}
+
+[data-theme='dark'] .clip-detail-hl-card,
+[data-theme='dark'] .clip-detail-hl-card:hover {
+  box-shadow: none;
+}
+
+.clip-detail-hl-card--mine {
+  border-left-color: var(--markline);
+}
+
+.clip-detail-hl-card--other {
+  border-left-color: var(--hl-blue-line);
+}
+
+.clip-detail-hl-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 0;
+  color: var(--fg);
+}
+
+.clip-detail-hl-mark {
+  background: var(--mark);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.05em 0.15em;
+  border-radius: 3px;
+}
+
+.clip-detail-hl-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.clip-detail-hl-meta {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+.clip-detail-hl-delete {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: transparent;
+  border: none;
+  padding: 0.2rem 0.35rem;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+}
+
+.clip-detail-hl-delete:hover:not(:disabled) {
+  color: var(--fg);
+}
+
+.clip-detail-hl-delete:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+@media (hover: hover) {
+  .clip-detail-hl-card--mine:hover .clip-detail-hl-delete {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .clip-detail-hl-delete {
+    opacity: 1;
+  }
+}
+
+/* ─── Right rail cards ────────────────────────────────────────────────── */
+.clip-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 0;
+}
+
+.clip-detail-card--actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.clip-detail-read-original {
+  text-decoration: none;
+  min-height: 52px;
+}
+
+.clip-detail-actions-meta {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.clip-detail-card-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0 0 0.75rem;
+}
+
+/* ─── Manage clip card ────────────────────────────────────────────────── */
+.clip-detail-manage-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.clip-detail-manage-state {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.clip-detail-manage-hint {
+  margin: 0.2rem 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.clip-detail-manage-toggle {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 12.5px;
+}
+
+.clip-detail-manage-confirm,
+.clip-detail-manage-delete-link {
+  margin-top: 1rem;
+}
+
+.clip-detail-manage-confirm-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.clip-detail-manage-delete {
+  width: auto;
+  padding: 0.4rem 0.9rem;
+  font-size: 12.5px;
+}
+
+.clip-detail-manage-delete-link {
+  display: inline-block;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--error-text);
+  cursor: pointer;
+}
+
+.clip-detail-manage-delete-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── Tags card ───────────────────────────────────────────────────────── */
+.clip-detail-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.clip-detail-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  max-width: 100%;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--fg-secondary);
+  background: var(--bg2);
+  border: 0.5px solid var(--border-med);
+  border-radius: 999px;
+  padding: 0.15rem 0.15rem 0.15rem 0.55rem;
+}
+
+.clip-detail-tag-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-detail-tag-remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--fg-muted);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.clip-detail-tag-pill:hover .clip-detail-tag-remove {
+  opacity: 1;
+}
+
+.clip-detail-tag-remove:hover:not(:disabled) {
+  color: var(--fg);
+  background: var(--bg-hover);
+}
+
+.clip-detail-tag-remove:disabled {
+  cursor: wait;
+  opacity: 0.45;
+}
+
+@media (hover: none) {
+  .clip-detail-tag-remove {
+    opacity: 1;
+  }
+}
+
+.clip-detail-tag-input {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+  background: var(--bg);
+  border: 0.5px solid var(--border-med);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  min-width: 7.5rem;
+  max-width: 14rem;
+  line-height: 1.35;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.clip-detail-tag-input::placeholder {
+  color: var(--fg-muted);
+}
+
+.clip-detail-tag-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.clip-detail-tag-input:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.clip-detail-add-tag {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px dashed var(--border-med);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  cursor: pointer;
+}
+
+.clip-detail-add-tag:hover:not(:disabled) {
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+
+.clip-detail-add-tag:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.clip-detail-tag-error {
+  margin: 0.5rem 0 0;
+  font-size: 12px;
+  color: var(--error-text);
+}
+
+/* ─── Agent-readable card ─────────────────────────────────────────────── */
+.clip-detail-agent-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.clip-detail-agent-hint {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.clip-detail-agent-card .settings-pat-secret {
+  margin: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+/* ─── Highlight jump nav ──────────────────────────────────────────────── */
+.clip-detail-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.clip-detail-nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0;
+  margin: 0;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg-secondary);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.clip-detail-nav-list li:last-child .clip-detail-nav-item {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.clip-detail-nav-item:hover {
+  color: var(--fg);
+}
+
+.clip-detail-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+
+.clip-detail-nav-dot--mine {
+  background: var(--amber);
+}
+
+.clip-detail-nav-dot--other {
+  background: var(--hl-blue-line);
+}
+
+.clip-detail-nav-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

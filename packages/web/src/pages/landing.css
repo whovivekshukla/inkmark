@@ -1,0 +1,243 @@
+/* ─── Landing & Sign-in re-skin ──────────────────────────────────────────
+   Co-located overrides for LandingPage.tsx and SignInPage.tsx.
+   Loaded after styles.css — equal-specificity rules here win.
+   Reuses .btn, .btn--primary, .btn--secondary, .btn--ghost, .link-back,
+   .theme-toggle from styles.css unchanged.
+──────────────────────────────────────────────────────────────────────── */
+
+/* ─── Landing shell ──────────────────────────────────────────────────── */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1.75rem max(1.5rem, calc(1.5rem + env(safe-area-inset-right, 0px))) 1.75rem
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-left, 0px)));
+  border-bottom: 1px solid var(--border);
+}
+
+.landing-logo {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4375rem;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.landing-logo:hover {
+  opacity: 0.75;
+}
+
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing-nav-actions .btn {
+  width: auto;
+}
+
+.landing-main {
+  flex: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 5rem max(1.5rem, calc(1.5rem + env(safe-area-inset-right, 0px))) 6rem
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-left, 0px)));
+}
+
+/* ─── Hero ───────────────────────────────────────────────────────────── */
+.landing-hero {
+  padding-bottom: 5.5rem;
+}
+
+.landing-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.71875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin: 0 0 1.25rem;
+}
+
+.landing-hero-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.5rem, 7vw, 4.125rem);
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+  margin: 0 0 1.5rem;
+  color: var(--fg);
+}
+
+.landing-hero-lede {
+  margin: 0;
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  color: var(--fg-secondary);
+  max-width: 600px;
+}
+
+.landing-hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 440px) {
+  .landing-hero-cta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .landing-hero-cta .btn {
+    width: auto;
+  }
+}
+
+/* ─── How it works ───────────────────────────────────────────────────── */
+.landing-how {
+  padding-top: 1rem;
+}
+
+.landing-mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.71875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0 0 2rem;
+}
+
+.landing-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 860px) {
+  .landing-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing-step {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.landing-step-number {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+  margin: 0 0 0.9rem;
+}
+
+.landing-step-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.25rem;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.5rem;
+  color: var(--fg);
+}
+
+.landing-step-body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+
+/* ─── Sign in ────────────────────────────────────────────────────────── */
+.sign-in-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.sign-in-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 1.75rem max(1.5rem, calc(1.5rem + env(safe-area-inset-right, 0px))) 0
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-left, 0px)));
+}
+
+.sign-in-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem max(1.5rem, calc(1.5rem + env(safe-area-inset-right, 0px)))
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-left, 0px)));
+}
+
+.sign-in-card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+}
+
+.sign-in-logo {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 3.25rem;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0 0 1rem;
+  color: var(--fg);
+}
+
+.sign-in-intro {
+  margin: 0 0 2rem;
+  font-size: 1.03125rem;
+  line-height: 1.55;
+  color: var(--fg-secondary);
+}
+
+.sign-in-divider {
+  border-top: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.sign-in-google {
+  width: 100%;
+}
+
+.sign-in-fine-print {
+  margin: 1.5rem 0 0;
+  font-size: 0.78125rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  text-align: center;
+}
