@@ -8,7 +8,6 @@ import { FeedPage } from './pages/FeedPage'
 import { LandingPage } from './pages/LandingPage'
 import { LibraryPage } from './pages/LibraryPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { SearchPage } from './pages/SearchPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SignInPage } from './pages/SignInPage'
 
@@ -40,7 +39,8 @@ export function App(): React.ReactElement {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/highlights" element={<Navigate to="/feed" replace />} />
-          <Route path="/search" element={<SearchPage />} />
+          {/* Search is now a global ⌘K overlay; keep the path as a redirect for old links. */}
+          <Route path="/search" element={<Navigate to="/library" replace />} />
           <Route path="/connect" element={<ConnectPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/clips/:clipId" element={<ClipDetailPage />} />
