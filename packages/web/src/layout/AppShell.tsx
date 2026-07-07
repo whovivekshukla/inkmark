@@ -45,10 +45,10 @@ export function AppShell(): React.ReactElement {
             </nav>
             <div className="app-topnav-trailing">
               <HeaderSearchButton />
-              <span className="mcp-pill" title="Connected to your agents over MCP">
+              <Link className="mcp-pill" to="/connect" title="Connected to your agents over MCP">
                 <span className="mcp-pill__dot" aria-hidden />
                 MCP
-              </span>
+              </Link>
               <ThemeToggle variant="nav" />
               {user ? (
                 <Link

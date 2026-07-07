@@ -962,7 +962,13 @@ body {
   font-weight: 500;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  cursor: default;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.mcp-pill:hover {
+  filter: brightness(1.05) saturate(1.1);
 }
 
 .mcp-pill__dot {
