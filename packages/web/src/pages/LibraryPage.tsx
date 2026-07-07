@@ -13,10 +13,12 @@ import {
   type LibraryFilterKey,
   type LibrarySortKey,
 } from '../lib/libraryFiltersUrl'
+import { useSearchOverlay } from '../search/SearchOverlay'
 import './library.css'
 
 export function LibraryPage(): React.ReactElement {
   const { token } = useAuth()
+  const { open: openSearchOverlay } = useSearchOverlay()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const init = parseLibrarySearchParams(searchParams)
@@ -223,12 +225,20 @@ export function LibraryPage(): React.ReactElement {
             <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
           </svg>
         </span>
+        {/* The bar is an entry point to the global ⌘K overlay, not an inline search box.
+            (Shared ?q= deep links still filter the grid via the query state.) */}
         <input
           type="search"
           className="library-search"
           placeholder="Search your clips and highlights…"
+          aria-label="Search your clips and highlights"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          readOnly
+          onMouseDown={(e) => {
+            e.preventDefault()
+            openSearchOverlay()
+          }}
+          onFocus={openSearchOverlay}
           autoComplete="off"
           spellCheck={false}
         />
