@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { FeedClipCard } from '../components/FeedClipCard'
 import { FeedTimelineEntry } from '../components/FeedTimelineEntry'
 import { formatShortRelative } from '../lib/formatRelative'
+import './feed.css'
 
 const PAGE_SIZE = 20
 

@@ -1,0 +1,227 @@
+/* ─── Settings page re-skin ──────────────────────────────────────────────
+   Co-located overrides layered on top of the shared settings-* rules in
+   src/styles.css. This file is imported after the global sheet, so
+   equal-specificity rules here win; a couple of selectors are bumped to
+   two classes where the base rule needs an explicit override. */
+
+.settings-page.settings-page--redesign {
+  max-width: 45rem;
+}
+
+.settings-header.settings-header {
+  margin-bottom: 2.25rem;
+}
+
+.page-title.settings-title {
+  font-size: 2.75rem;
+  letter-spacing: -0.02em;
+}
+
+.section-rule-heading.settings-section-heading {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+/* Bio field: label row + live counter */
+.settings-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.settings-bio-counter {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.settings-textarea.settings-textarea--bio {
+  min-height: 96px;
+}
+
+/* Footer actions: primary save + quiet sign-out, side by side */
+.settings-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.settings-submit.settings-submit {
+  width: auto;
+}
+
+.settings-signout.settings-signout {
+  margin-top: 0;
+}
+
+/* MCP endpoint field */
+.settings-endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-endpoint {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-med);
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.settings-endpoint-copy.settings-endpoint-copy {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.settings-api-key {
+  margin-top: 1.75rem;
+}
+
+/* Connected agents list */
+.settings-agent-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.settings-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-agent-row:last-child {
+  border-bottom: none;
+}
+
+.settings-agent-glyph {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-agent-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.settings-agent-name {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.settings-agent-detail {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.settings-agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 12px;
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.settings-agent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3ba55d;
+  flex-shrink: 0;
+}
+
+.settings-agent-action {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.settings-agent-action:hover {
+  color: var(--fg-secondary);
+}
+
+/* Appearance: theme segmented control */
+.settings-theme-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--bg2);
+}
+
+.settings-theme-segment {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.5rem 1.1rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-theme-segment:hover {
+  color: var(--fg-secondary);
+}
+
+.settings-theme-segment--active,
+.settings-theme-segment--active:hover {
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 719px) {
+  .page-title.settings-title {
+    font-size: 2rem;
+  }
+
+  .settings-endpoint-row {
+    flex-wrap: wrap;
+  }
+
+  .settings-endpoint {
+    white-space: normal;
+    word-break: break-all;
+  }
+}

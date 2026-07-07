@@ -8,14 +8,6 @@ const HL_SWATCH_CAP = 4
 
 const HL_SWATCH = ['library-hl-swatch--amber', 'library-hl-swatch--orange', 'library-hl-swatch--blue'] as const
 
-function accentForClip(id: string): 'amber' | 'blue' | null {
-  let n = 0
-  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i)) % 5
-  if (n === 0 || n === 1) return 'amber'
-  if (n === 2 || n === 3) return 'blue'
-  return null
-}
-
 interface LibraryClipCardProps {
   clip: ClipModel
   linkState?: { from: string }
@@ -25,7 +17,6 @@ export function LibraryClipCard({ clip, linkState }: LibraryClipCardProps): Reac
   const title = clip.title?.trim() || clip.domain || 'Untitled'
   const sourceLetter = clip.domain?.slice(0, 1).toUpperCase() ?? clip.source.slice(0, 1).toUpperCase()
   const saved = formatShortRelative(clip.savedAt)
-  const accent = accentForClip(clip.id)
   const count = clip.highlightCount ?? 0
   const dotCount = Math.min(HL_SWATCH_CAP, count)
   const overflow = count > HL_SWATCH_CAP ? count - HL_SWATCH_CAP : 0
@@ -33,7 +24,7 @@ export function LibraryClipCard({ clip, linkState }: LibraryClipCardProps): Reac
 
   return (
     <Link
-      className={`library-clip-card${accent ? ` library-clip-card--accent-${accent}` : ''}`}
+      className={`library-clip-card${count > 0 ? ' library-clip-card--highlighted' : ''}`}
       to={`/clips/${encodeURIComponent(clip.id)}`}
       state={linkState}
     >

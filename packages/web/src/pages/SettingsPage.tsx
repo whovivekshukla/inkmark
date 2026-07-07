@@ -10,10 +10,34 @@ import {
   updateProfile,
 } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
-import { CopyBlock } from '../components/CopyBlock'
-import { mcpUrl, mcpUrlConfig, TOKEN_PLACEHOLDER } from '../lib/connectSnippets'
+import { mcpUrl, TOKEN_PLACEHOLDER } from '../lib/connectSnippets'
+import { useTheme, type Theme } from '../theme/ThemeContext'
+import './settings.css'
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/
+const MAX_BIO_LENGTH = 500
+
+/** Integrations Inkmark already documents in the Connect guide — presented here as available, not "live." */
+const AVAILABLE_AGENTS = [
+  {
+    key: 'claude',
+    glyph: 'C',
+    name: 'Claude',
+    detail: 'Connect by URL — remote MCP, no install',
+  },
+  {
+    key: 'codex',
+    glyph: 'X',
+    name: 'Codex CLI',
+    detail: 'Bridges over stdio via mcp-remote',
+  },
+  {
+    key: 'extension',
+    glyph: 'E',
+    name: 'Browser extension',
+    detail: 'Clip and highlight from any page',
+  },
+] as const
 
 function formatTokenDate(iso: Date | string | null): string {
   if (!iso) return '—'
@@ -28,8 +52,9 @@ function tokenIsActive(t: PersonalAccessTokenModel): boolean {
 }
 
 export function SettingsPage(): ReactElement {
-  const { user, token, refreshUser } = useAuth()
+  const { user, token, refreshUser, signOut } = useAuth()
   const canManagePat = isSessionJwt(token)
+  const { theme, setTheme } = useTheme()
 
   const [displayName, setDisplayName] = useState('')
   const [username, setUsername] = useState('')
@@ -89,7 +114,7 @@ export function SettingsPage(): ReactElement {
       setProfileError('Username must be 3–30 characters: lowercase letters, numbers, underscores only.')
       return
     }
-    if (b.length > 500) {
+    if (b.length > MAX_BIO_LENGTH) {
       setProfileError('Bio must be 500 characters or less.')
       return
     }
@@ -158,21 +183,23 @@ export function SettingsPage(): ReactElement {
     )
   }
 
+  const endpoint = mcpUrl()
+
   return (
-    <div className="page-wide settings-page">
+    <div className="page-wide settings-page settings-page--redesign">
       <p className="settings-back">
         <Link className="link-back" to="/library">
           ← Library
         </Link>
       </p>
 
-      <header className="page-header">
-        <h1 className="page-title">Settings</h1>
+      <header className="page-header settings-header">
+        <h1 className="page-title settings-title">Settings</h1>
         <p className="page-lede">Profile and API access</p>
       </header>
 
       <section className="settings-section" id="profile" aria-labelledby="settings-profile-heading">
-        <h2 id="settings-profile-heading" className="section-rule-heading">
+        <h2 id="settings-profile-heading" className="section-rule-heading settings-section-heading">
           Profile
         </h2>
         <form className="settings-form" onSubmit={onSaveProfile}>
@@ -211,178 +238,211 @@ export function SettingsPage(): ReactElement {
           </div>
 
           <div className="settings-field">
-            <label className="settings-label" htmlFor="settings-bio">
-              Bio
-            </label>
+            <div className="settings-field-head">
+              <label className="settings-label" htmlFor="settings-bio">
+                Bio
+              </label>
+              <span className="settings-hint settings-bio-counter">
+                {bio.length}/{MAX_BIO_LENGTH}
+              </span>
+            </div>
             <textarea
               id="settings-bio"
-              className="settings-textarea"
+              className="settings-textarea settings-textarea--bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
-              maxLength={500}
+              maxLength={MAX_BIO_LENGTH}
             />
-            <span className="settings-hint">{bio.length}/500</span>
           </div>
 
           {profileError ? <p className="error settings-alert">{profileError}</p> : null}
           {profileSaved ? <p className="settings-success">Saved.</p> : null}
 
-          <button type="submit" className="btn btn--primary settings-submit" disabled={profileSaving}>
-            {profileSaving ? 'Saving…' : 'Save profile'}
-          </button>
+          <div className="settings-footer-actions">
+            <button type="submit" className="btn btn--primary settings-submit" disabled={profileSaving}>
+              {profileSaving ? 'Saving…' : 'Save profile'}
+            </button>
+            <button type="button" className="link-quiet-signout settings-signout" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
         </form>
       </section>
 
-      <section className="settings-section" id="tokens" aria-labelledby="settings-tokens-heading">
-        <h2 id="settings-tokens-heading" className="section-rule-heading">
-          Personal access tokens
+      <section className="settings-section" id="agent-access" aria-labelledby="settings-agent-heading">
+        <h2 id="settings-agent-heading" className="section-rule-heading settings-section-heading">
+          Agent access · MCP
         </h2>
         <p className="settings-lede">
-          Use tokens for the API or MCP from scripts. Treat them like passwords — they are shown in full only once when
-          created.
+          Let Claude and other AI hosts clip and highlight on your behalf over MCP. Point your host at the
+          endpoint below and authenticate with a personal access token.
         </p>
 
-        {!canManagePat ? (
-          <p className="empty-state empty-state--inline">
-            You’re signed in with a personal access token. Sign in with Google from another browser session to create or
-            revoke tokens here.
-          </p>
-        ) : (
-          <>
-            {newlyCreated ? (
-              <div className="settings-pat-reveal" role="alert">
-                <p className="settings-pat-reveal-title">Copy your new token</p>
-                <p className="settings-hint">You won’t see it again. Store it somewhere safe.</p>
-                <pre className="settings-pat-secret">{newlyCreated.token}</pre>
-                <div className="settings-pat-reveal-actions">
-                  <button type="button" className="btn btn--secondary" onClick={() => void copyNewToken()}>
-                    Copy
-                  </button>
-                  <button type="button" className="btn btn--ghost" onClick={() => setNewlyCreated(null)}>
-                    Done
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            <form className="settings-form settings-form--inline" onSubmit={onCreatePat}>
-              <div className="settings-field settings-field--grow">
-                <label className="settings-label" htmlFor="pat-name">
-                  New token name
-                </label>
-                <input
-                  id="pat-name"
-                  className="settings-input"
-                  value={patName}
-                  onChange={(e) => setPatName(e.target.value)}
-                  placeholder="e.g. MCP, CLI"
-                />
-              </div>
-              <div className="settings-field">
-                <label className="settings-label" htmlFor="pat-expires">
-                  Expires (optional)
-                </label>
-                <input
-                  id="pat-expires"
-                  className="settings-input"
-                  type="datetime-local"
-                  value={patExpiresLocal}
-                  onChange={(e) => setPatExpiresLocal(e.target.value)}
-                />
-              </div>
-              <button type="submit" className="btn btn--secondary settings-pat-create" disabled={patCreating}>
-                {patCreating ? 'Creating…' : 'Create token'}
-              </button>
-            </form>
-
-            {patsError ? <p className="error settings-alert">{patsError}</p> : null}
-
-            {patsLoading ? (
-              <p className="app-boot-text">Loading tokens</p>
-            ) : pats.length === 0 ? (
-              <p className="empty-state empty-state--inline">No tokens yet.</p>
-            ) : (
-              <ul className="settings-pat-list">
-                {pats.map((t) => (
-                  <li key={t.id} className="settings-pat-row">
-                    <div className="settings-pat-main">
-                      <span className="settings-pat-name">{t.name}</span>
-                      <code className="settings-pat-prefix">{t.prefix}…</code>
-                      <span className="settings-pat-meta">
-                        Created {formatTokenDate(t.createdAt)}
-                        {t.lastUsedAt ? ` · Last used ${formatTokenDate(t.lastUsedAt)}` : ''}
-                        {t.expiresAt ? ` · Expires ${formatTokenDate(t.expiresAt)}` : ''}
-                        {t.revokedAt ? ` · Revoked ${formatTokenDate(t.revokedAt)}` : ''}
-                      </span>
-                      {!tokenIsActive(t) ? (
-                        <span className="settings-pat-badge">{t.revokedAt ? 'Revoked' : 'Expired'}</span>
-                      ) : null}
-                    </div>
-                    {tokenIsActive(t) ? (
-                      <button
-                        type="button"
-                        className="link-quiet-signout settings-pat-revoke"
-                        disabled={revokingId === t.id}
-                        onClick={() => void onRevokePat(t.id)}
-                      >
-                        {revokingId === t.id ? 'Revoking…' : 'Revoke'}
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-      </section>
-
-      <section className="settings-section" id="connect" aria-labelledby="settings-connect-heading">
-        <h2 id="settings-connect-heading" className="section-rule-heading">
-          Connect your tools
-        </h2>
-        <p className="settings-lede">
-          Clip and highlight from Claude and other AI hosts using the Inkmark MCP server. You’ll need a personal access
-          token from the section above. For the browser extension, Codex, and API examples, see the full{' '}
-          <Link to="/connect">setup guide</Link>.
-        </p>
-
-        {newlyCreated ? (
-          <p className="settings-hint settings-connect-note">
-            The snippets below are pre-filled with the token you just created.
-          </p>
-        ) : (
-          <p className="settings-hint settings-connect-note">
-            Replace <code>{TOKEN_PLACEHOLDER}</code> with a token you created above.
-          </p>
-        )}
-
-        <div className="settings-connect-block">
-          <h3 className="settings-connect-subhead">Remote MCP</h3>
-          <p className="settings-hint">
-            Add this to your host’s MCP config. Hosts without native remote support can bridge with{' '}
-            <code>mcp-remote</code> — see the <Link to="/connect">setup guide</Link> for that and
-            Claude Code.
-          </p>
-          <CopyBlock
-            ariaLabel="Remote MCP config"
-            text={mcpUrlConfig(mcpUrl(), newlyCreated?.token ?? TOKEN_PLACEHOLDER)}
-          />
+        <div className="settings-field">
+          <label className="settings-label" htmlFor="settings-mcp-endpoint">
+            MCP endpoint
+          </label>
+          <div className="settings-endpoint-row">
+            <code id="settings-mcp-endpoint" className="settings-endpoint">
+              {endpoint}
+            </code>
+            <button
+              type="button"
+              className="btn btn--secondary settings-endpoint-copy"
+              onClick={() => void navigator.clipboard.writeText(endpoint).catch(() => undefined)}
+            >
+              Copy
+            </button>
+          </div>
         </div>
 
-        <div className="settings-connect-block">
-          <h3 className="settings-connect-subhead">Chrome extension</h3>
-          <p className="settings-hint">
-            The extension isn’t on the Chrome Web Store yet. To build and load it from source, see the{' '}
-            <a
-              href="https://github.com/whovivekshukla/inkmark/tree/main/packages/extension"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              extension package on GitHub
-            </a>{' '}
-            and load it unpacked from <code>chrome://extensions</code> with Developer mode on.
+        <div className="settings-field settings-api-key">
+          <label className="settings-label" htmlFor="settings-api-key">
+            API key
+          </label>
+
+          {!canManagePat ? (
+            <p className="empty-state empty-state--inline">
+              You’re signed in with a personal access token. Sign in with Google from another browser
+              session to create or revoke tokens here.
+            </p>
+          ) : (
+            <>
+              {newlyCreated ? (
+                <div className="settings-pat-reveal" role="alert">
+                  <p className="settings-pat-reveal-title">Copy your new token</p>
+                  <p className="settings-hint">You won’t see it again. Store it somewhere safe.</p>
+                  <pre className="settings-pat-secret">{newlyCreated.token}</pre>
+                  <div className="settings-pat-reveal-actions">
+                    <button type="button" className="btn btn--secondary" onClick={() => void copyNewToken()}>
+                      Copy
+                    </button>
+                    <button type="button" className="btn btn--ghost" onClick={() => setNewlyCreated(null)}>
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              <form className="settings-form settings-form--inline" onSubmit={onCreatePat}>
+                <div className="settings-field settings-field--grow">
+                  <label className="settings-label" htmlFor="pat-name">
+                    New token name
+                  </label>
+                  <input
+                    id="pat-name"
+                    className="settings-input"
+                    value={patName}
+                    onChange={(e) => setPatName(e.target.value)}
+                    placeholder="e.g. MCP, CLI"
+                  />
+                </div>
+                <div className="settings-field">
+                  <label className="settings-label" htmlFor="pat-expires">
+                    Expires (optional)
+                  </label>
+                  <input
+                    id="pat-expires"
+                    className="settings-input"
+                    type="datetime-local"
+                    value={patExpiresLocal}
+                    onChange={(e) => setPatExpiresLocal(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="btn btn--secondary settings-pat-create" disabled={patCreating}>
+                  {patCreating ? 'Creating…' : 'Create token'}
+                </button>
+              </form>
+
+              {patsError ? <p className="error settings-alert">{patsError}</p> : null}
+
+              {patsLoading ? (
+                <p className="app-boot-text">Loading tokens</p>
+              ) : pats.length === 0 ? (
+                <p className="empty-state empty-state--inline">No tokens yet.</p>
+              ) : (
+                <ul className="settings-pat-list">
+                  {pats.map((t) => (
+                    <li key={t.id} className="settings-pat-row">
+                      <div className="settings-pat-main">
+                        <span className="settings-pat-name">{t.name}</span>
+                        <code className="settings-pat-prefix">{t.prefix}…</code>
+                        <span className="settings-pat-meta">
+                          Created {formatTokenDate(t.createdAt)}
+                          {t.lastUsedAt ? ` · Last used ${formatTokenDate(t.lastUsedAt)}` : ''}
+                          {t.expiresAt ? ` · Expires ${formatTokenDate(t.expiresAt)}` : ''}
+                          {t.revokedAt ? ` · Revoked ${formatTokenDate(t.revokedAt)}` : ''}
+                        </span>
+                        {!tokenIsActive(t) ? (
+                          <span className="settings-pat-badge">{t.revokedAt ? 'Revoked' : 'Expired'}</span>
+                        ) : null}
+                      </div>
+                      {tokenIsActive(t) ? (
+                        <button
+                          type="button"
+                          className="link-quiet-signout settings-pat-revoke"
+                          disabled={revokingId === t.id}
+                          onClick={() => void onRevokePat(t.id)}
+                        >
+                          {revokingId === t.id ? 'Revoking…' : 'Revoke'}
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="settings-field">
+          <span className="settings-label">Connected agents</span>
+          <ul className="settings-agent-list">
+            {AVAILABLE_AGENTS.map((agent) => (
+              <li key={agent.key} className="settings-agent-row">
+                <span className="settings-agent-glyph" aria-hidden="true">
+                  {agent.glyph}
+                </span>
+                <span className="settings-agent-info">
+                  <span className="settings-agent-name">{agent.name}</span>
+                  <span className="settings-agent-detail">{agent.detail}</span>
+                </span>
+                <span className="settings-agent-status">
+                  <span className="settings-agent-dot" aria-hidden="true" />
+                  Available
+                </span>
+                <Link className="settings-agent-action" to="/connect">
+                  Set up
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="settings-hint settings-connect-note">
+            Replace <code>{TOKEN_PLACEHOLDER}</code> with a token from the API key section above, or see the
+            full <Link to="/connect">setup guide</Link> for host-specific config, including the Chrome
+            extension.
           </p>
+        </div>
+      </section>
+
+      <section className="settings-section" id="appearance" aria-labelledby="settings-appearance-heading">
+        <h2 id="settings-appearance-heading" className="section-rule-heading settings-section-heading">
+          Appearance
+        </h2>
+        <div className="settings-theme-track" role="radiogroup" aria-label="Theme">
+          {(['light', 'dark'] as Theme[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={theme === t}
+              className={`settings-theme-segment${theme === t ? ' settings-theme-segment--active' : ''}`}
+              onClick={() => setTheme(t)}
+            >
+              {t === 'light' ? 'Light' : 'Dark'}
+            </button>
+          ))}
         </div>
       </section>
     </div>

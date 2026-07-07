@@ -13,9 +13,12 @@ import {
   type LibraryFilterKey,
   type LibrarySortKey,
 } from '../lib/libraryFiltersUrl'
+import { useSearchOverlay } from '../search/SearchOverlay'
+import './library.css'
 
 export function LibraryPage(): React.ReactElement {
   const { token } = useAuth()
+  const { open: openSearchOverlay } = useSearchOverlay()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const init = parseLibrarySearchParams(searchParams)
@@ -168,6 +171,9 @@ export function LibraryPage(): React.ReactElement {
   }, [])
 
   const totalClips = meta?.total ?? clips.length
+  // No aggregate highlight total is exposed by the API (only per-clip highlightCount),
+  // so this only reflects highlights on the clips currently loaded into memory.
+  const loadedHighlights = clips.reduce((sum, c) => sum + (c.highlightCount ?? 0), 0)
 
   const libraryBackPath =
     searchParams.toString().length > 0 ? `/library?${searchParams.toString()}` : '/library'
@@ -195,6 +201,9 @@ export function LibraryPage(): React.ReactElement {
           <h1 className="library-page-title">Library</h1>
           <p className="library-page-sub">
             {totalClips} clip{totalClips === 1 ? '' : 's'}
+            {loadedHighlights > 0
+              ? ` · ${loadedHighlights} highlight${loadedHighlights === 1 ? '' : 's'}`
+              : ''}
           </p>
         </div>
         <button
@@ -216,12 +225,20 @@ export function LibraryPage(): React.ReactElement {
             <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
           </svg>
         </span>
+        {/* The bar is an entry point to the global ⌘K overlay, not an inline search box.
+            (Shared ?q= deep links still filter the grid via the query state.) */}
         <input
           type="search"
           className="library-search"
           placeholder="Search your clips and highlights…"
+          aria-label="Search your clips and highlights"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          readOnly
+          onMouseDown={(e) => {
+            e.preventDefault()
+            openSearchOverlay()
+          }}
+          onFocus={openSearchOverlay}
           autoComplete="off"
           spellCheck={false}
         />
